@@ -1,0 +1,41 @@
+services:
+  crs-nginx:
+    image: owasp/modsecurity-crs:nginx
+    container_name: waf
+    hostname: waf
+    restart: always
+    environment:
+      TZ: Asia/Seoul
+      BACKEND: http://web:8000   # 프록시 대상
+      ERRORLOG: /var/log/nginx/error.log
+      REAL_IP_HEADER: CF-Connecting-IP
+      MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
+      MODSEC_AUDIT_LOG_FORMAT: Native
+      MODSEC_AUDIT_ENGINE: On
+    ports:
+      - "80:8080"
+#    volumes:
+#      - ./docker/modsecurity/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+#      - ./docker/modsecurity/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+    volumes:
+      - ./modsec-logs:/var/log/modsecurity
+    networks:
+      - shared_network
+    depends_on:
+      - web
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  web:
+    image: nginx:alpine
+    container_name: web
+    command: sh -c "echo 'OK' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
+    networks:
+      - shared_network
+
+networks:
+  shared_network:
+    driver: bridge
