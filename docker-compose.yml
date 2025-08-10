@@ -6,19 +6,18 @@ services:
     restart: always
     environment:
       TZ: Asia/Seoul
-      BACKEND: http://web:8000   # 프록시 대상
+      BACKEND: http://web:80  # 프록시 대상
       ERRORLOG: /var/log/nginx/error.log
-      REAL_IP_HEADER: CF-Connecting-IP
       MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
       MODSEC_AUDIT_LOG_FORMAT: Native
-      MODSEC_AUDIT_ENGINE: On
+      MODSEC_AUDIT_ENGINE: DetectionOnly  #  오탐/튜닝 → 그다음 차단까지 하려면 Onㅇ
     ports:
       - "80:8080"
-#    volumes:
-#      - ./docker/modsecurity/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-#      - ./docker/modsecurity/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+
     volumes:
       - ./modsec-logs:/var/log/modsecurity
+      - ./docker/modsecurity/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+      - ./docker/modsecurity/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
     networks:
       - shared_network
     depends_on:
