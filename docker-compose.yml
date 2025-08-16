@@ -10,7 +10,7 @@ services:
       ERRORLOG: /var/log/nginx/error.log
       MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
       MODSEC_AUDIT_LOG_FORMAT: Native
-      MODSEC_AUDIT_ENGINE: DetectionOnly  #  오탐/튜닝 → 그다음 차단까지 하려면 Onㅇ
+      MODSEC_AUDIT_ENGINE: DetectionOnly  #  오탐/튜닝 → 그다음 차단까지 하려면 On
     ports:
       - "80:8080"
 
