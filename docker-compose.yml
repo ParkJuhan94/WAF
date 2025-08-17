@@ -10,14 +10,14 @@ services:
       ERRORLOG: /var/log/nginx/error.log
       MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
       MODSEC_AUDIT_LOG_FORMAT: Native
-      MODSEC_AUDIT_ENGINE: DetectionOnly  #  오탐/튜닝 → 그다음 차단까지 하려면 On
+      MODSEC_AUDIT_ENGINE: RelevantOnly
     ports:
       - "80:8080"
 
     volumes:
       - ./modsec-logs:/var/log/modsecurity
-      - ./docker/modsecurity/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-      - ./docker/modsecurity/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+      - ./waf/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/opt/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:ro
+      - ./waf/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/opt/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:ro
     networks:
       - shared_network
     depends_on:
