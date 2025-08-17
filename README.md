@@ -1,14 +1,72 @@
-# 🔐 WAF
+# 🔐 WAF Project (Web Application Firewall)
 
-```
-🧑🏻‍💻 [브라우저 또는 curl]
-     ↓
-[WAF Docker 컨테이너 :80]
-  ↳ Nginx + ModSecurity
-     ↓
-[Spring Boot 앱 :8080]
-```
+A practical project to design and implement a **Web Application Firewall (WAF)** using **Nginx, ModSecurity, and OWASP CRS**, and extend it with a **multi-tenant SaaS management console**.  
 
-- 웹 애플리케이션 방화벽(`Web Application Firewall`)의 약자로, 웹 서버 앞단에 위치하여 웹 애플리케이션을 공격으로부터 보호하는 보안 솔루션입니다.
-- `HTTP/HTTPS 프로토콜`을 통해 전송되는 트래픽을 분석하고 악성 공격을 차단하여 웹 서비스의 안전성을 높입니다. 
-- `nginx` + `ModSecurity` + `OWASP CRS` 기반의 WAF를 직접 개발하고, `SaaS 형태`로 구조화합니다.
+---
+
+## 🚀 Overview
+The WAF Project aims to:
+- Protect web applications from common attacks (SQL injection, XSS, Path Traversal, etc.).
+- Extend the default OWASP CRS with **custom detection rules** tailored to specific scenarios.
+- Provide a **SaaS-based management console** for administrators to:
+  - Manage rules (create, update, delete).
+  - View and analyze logs.
+  - Support multi-tenancy (per-tenant policy and auditing).
+
+---
+
+## ✨ Features
+- **WAF Core**
+  - Nginx + ModSecurity v3 integration
+  - OWASP Core Rule Set (CRS) baseline
+  - Custom rules optimized by scenario
+- **Console Backend**
+  - Google OAuth2 login (SaaS model)
+  - Role-based access control (User / Admin)
+  - Multi-tenant support (Tenant context isolation)
+  - Rule & log management APIs
+- **Future Work**
+  - Automated attack traffic generation (for testing)
+  - Log visualization with ELK/Grafana
+  - CI/CD pipeline integration
+
+---
+
+## 🏗 Architecture
+```mermaid
+flowchart TD
+    Client[User / Attacker] -->|HTTP/HTTPS| WAF[Nginx + ModSecurity]
+    WAF -->|Filtered Logs| Console[WAF Management Console]
+    Console --> DB[(MySQL)]
+    Console --> AdminUI[Web Dashboard]
+```
+---
+## 🔧 Installation & Usage
+### 1. Prerequisites
+- Docker & Docker Compose
+- Java 17 (for backend console)
+- Gradle
+
+### 2. Clone Repository
+```bash
+git clone https://github.com/ParkJuhan94/WAF.git
+cd WAF
+```
+### 3. Run WAF with Docker
+```bash
+docker-compose up -d
+```
+### 4. Backend Console (Spring Boot)
+```bash
+cd backend
+./gradlew bootRun
+```
+---
+
+## 🛠 Tech Stack
+- Core: Nginx, ModSecurity, OWASP CRS
+- Backend: Java 17, Spring Boot 3, JPA, MySQL
+- Auth: Google OAuth2
+- Infra: Docker, Docker Compose
+- Monitoring: ELK Stack, Grafana
+--- 
