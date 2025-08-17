@@ -1,2 +1,18 @@
-/modsec-logs/audit.log
+# IDE
 .idea/
+*.iml
+
+# MacOS
+.DS_Store
+
+# Gradle & Build
+.gradle/
+build/
+
+# Application config
+backend/src/main/resources/application.yml
+modsec-logs/
+
+# Logs
+modsec-logs/
+*.log
