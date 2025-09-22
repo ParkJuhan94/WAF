@@ -3,13 +3,13 @@ services:
     build: ./waf
     container_name: waf
     restart: unless-stopped
-    ports:
-      - "80:8080"     # 컨테이너는 비루트 사용자라 기본 8080/8443 리슨
+    ports: ["80:8080"]      # 컨테이너는 비루트 사용자라 기본 8080/8443 리슨
     environment:
       TZ: Asia/Seoul
       BACKEND: http://web:80         # 필수. 리버스 프록시 대상
-      SERVER_NAME: waf.local
       ERRORLOG: /var/log/nginx/error.log
+      MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
+      MODSEC_AUDIT_LOG_FORMAT: Native
       # CRS 주요 스위치들
       BLOCKING_PARANOIA: "2"
       DETECTION_PARANOIA: "2"
