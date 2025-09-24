@@ -1,11 +1,11 @@
 import React from 'react';
-import { ConfigProvider, theme } from 'antd';
+import { ConfigProvider, theme, Layout } from 'antd';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { AppLayout } from './components/layout/AppLayout';
-import { GoogleLogin } from './components/auth/GoogleLogin';
-import { useAuthStore } from './stores/useAuthStore';
+import { MockDashboard } from './components/dashboard/MockDashboard';
 import './index.css';
+
+const { Header, Content } = Layout;
 
 // Create a client
 const queryClient = new QueryClient({
@@ -37,13 +37,38 @@ const darkTheme = {
 };
 
 const AppContent: React.FC = () => {
-  const { isAuthenticated } = useAuthStore();
-
-  if (!isAuthenticated) {
-    return <GoogleLogin />;
-  }
-
-  return <AppLayout />;
+  return (
+    <Layout style={{ minHeight: '100vh' }}>
+      <Header style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 24px',
+        borderBottom: '1px solid #3a4553'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            background: '#1ec997',
+            borderRadius: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 'bold',
+            color: 'white'
+          }}>
+            W
+          </div>
+          <span style={{ color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
+            WAF Console
+          </span>
+        </div>
+      </Header>
+      <Content style={{ padding: '24px', background: '#1b2431' }}>
+        <MockDashboard />
+      </Content>
+    </Layout>
+  );
 };
 
 const App: React.FC = () => {
