@@ -59,40 +59,44 @@ export const SaaSLayout: React.FC = () => {
           trigger={null}
           collapsible
           collapsed={collapsed}
-          className="bg-bg-card border-r border-border"
+          className="bg-bg-card border-r border-border flex flex-col"
           width={240}
           collapsedWidth={80}
         >
           {/* Collapse toggle button */}
-          <div className="p-4 border-b border-border">
+          <div className="p-6 border-b border-border">
             <div
-              className="flex items-center justify-center cursor-pointer text-text-secondary hover:text-accent-primary"
+              className="flex items-center justify-center cursor-pointer text-text-secondary hover:text-accent-primary transition-colors duration-200 p-2 rounded-lg hover:bg-bg-surface"
               onClick={() => setCollapsed(!collapsed)}
             >
-              {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              {collapsed ? <MenuUnfoldOutlined size={18} /> : <MenuFoldOutlined size={18} />}
             </div>
           </div>
 
           {/* Navigation menu */}
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={[location.pathname]}
-            items={menuItems}
-            onClick={handleMenuClick}
-            className="bg-transparent border-0 pt-4"
-            style={{
-              backgroundColor: 'transparent',
-            }}
-          />
+          <div className="flex-1 py-4">
+            <Menu
+              theme="dark"
+              mode="inline"
+              selectedKeys={[location.pathname]}
+              items={menuItems}
+              onClick={handleMenuClick}
+              className="bg-transparent border-0 px-4"
+              style={{
+                backgroundColor: 'transparent',
+                fontSize: '14px',
+                lineHeight: '44px',
+              }}
+            />
+          </div>
 
-          {/* Footer info */}
+          {/* Footer info - Fixed at bottom */}
           {!collapsed && (
-            <div className="absolute bottom-4 left-4 right-4">
+            <div className="p-4 border-t border-border">
               <div className="bg-bg-surface rounded-lg p-3">
-                <div className="text-text-secondary text-xs space-y-1">
-                  <div>WAF SaaS v1.0.0</div>
-                  <div>ModSecurity + OWASP CRS</div>
+                <div className="text-text-secondary text-xs space-y-1 text-center">
+                  <div className="font-medium text-accent-primary">WAF SaaS v1.0.0</div>
+                  <div className="opacity-75">ModSecurity + OWASP CRS</div>
                 </div>
               </div>
             </div>
@@ -100,7 +104,7 @@ export const SaaSLayout: React.FC = () => {
         </Sider>
 
         <Layout>
-          <Content className="bg-bg-primary overflow-auto">
+          <Content className="bg-bg-primary overflow-auto p-8">
             <Outlet />
           </Content>
         </Layout>

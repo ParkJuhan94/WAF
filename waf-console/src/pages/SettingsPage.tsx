@@ -7,7 +7,7 @@ const { TabPane } = Tabs;
 
 export const SettingsPage: React.FC = () => {
   return (
-    <div className="p-6">
+    <div>
       <Title level={2} className="text-text-primary mb-6">
         시스템 설정
       </Title>
