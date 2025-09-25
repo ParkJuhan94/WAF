@@ -9,7 +9,7 @@ export const ProfilePage: React.FC = () => {
   const { user } = useAuthStore();
 
   return (
-    <div className="p-6">
+    <div>
       <Title level={2} className="text-text-primary mb-6">
         사용자 프로필
       </Title>
