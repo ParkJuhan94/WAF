@@ -1,11 +1,21 @@
 import React from 'react';
-import { ConfigProvider, theme, Layout } from 'antd';
+import { ConfigProvider, theme } from 'antd';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
-import { MockDashboard } from './components/dashboard/MockDashboard';
-import './index.css';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { SaaSLayout } from './components/layout/SaaSLayout';
 
-const { Header, Content } = Layout;
+// Pages
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { RulesPage } from './pages/RulesPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { SettingsPage } from './pages/SettingsPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { NotFoundPage } from './pages/NotFoundPage';
+
+import './index.css';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -36,47 +46,37 @@ const darkTheme = {
   },
 };
 
-const AppContent: React.FC = () => {
-  return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Header style={{
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 24px',
-        borderBottom: '1px solid #3a4553'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            background: '#1ec997',
-            borderRadius: '8px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 'bold',
-            color: 'white'
-          }}>
-            W
-          </div>
-          <span style={{ color: 'white', fontSize: '18px', fontWeight: 'bold' }}>
-            WAF Console
-          </span>
-        </div>
-      </Header>
-      <Content style={{ padding: '24px', background: '#1b2431' }}>
-        <MockDashboard />
-      </Content>
-    </Layout>
-  );
-};
-
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <ConfigProvider theme={darkTheme}>
         <QueryClientProvider client={queryClient}>
-          <AppContent />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+
+              {/* Protected routes with layout */}
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <SaaSLayout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<DashboardPage />} />
+                <Route path="rules" element={<RulesPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+              </Route>
+
+              {/* 404 page */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </BrowserRouter>
         </QueryClientProvider>
       </ConfigProvider>
     </ErrorBoundary>
