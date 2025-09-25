@@ -1,1 +1,19 @@
+# ModSecurity logs
 /modsec-logs/audit.log
+logs/
+
+# IDE files
+.idea/
+.vscode/
+
+# OS files
+.DS_Store
+*/.DS_Store
+
+# Development temporary files
+.vite/
+waf-console/.vite/
+
+# Node modules
+node_modules/
+waf-console/node_modules/
