@@ -35,16 +35,6 @@ export const SaaSLayout: React.FC = () => {
       icon: <BarChartOutlined />,
       label: '분석',
     },
-    {
-      key: '/settings',
-      icon: <SettingOutlined />,
-      label: '설정',
-    },
-    {
-      key: '/profile',
-      icon: <UserOutlined />,
-      label: '프로필',
-    },
   ];
 
   const handleMenuClick = (e: any) => {
@@ -59,52 +49,45 @@ export const SaaSLayout: React.FC = () => {
           trigger={null}
           collapsible
           collapsed={collapsed}
-          className="bg-bg-card border-r border-border flex flex-col"
+          className="bg-bg-card border-r border-border"
           width={240}
           collapsedWidth={80}
+          style={{ display: 'flex', flexDirection: 'column' }}
         >
           {/* Collapse toggle button */}
-          <div className="p-6 border-b border-border">
+          <div className="p-4 border-b border-border">
             <div
-              className="flex items-center justify-center cursor-pointer text-text-secondary hover:text-accent-primary transition-colors duration-200 p-2 rounded-lg hover:bg-bg-surface"
+              className="flex items-center justify-center cursor-pointer text-text-secondary hover:text-accent-primary transition-colors p-3 rounded-lg hover:bg-bg-surface"
               onClick={() => setCollapsed(!collapsed)}
+              style={{
+                minHeight: '48px',
+                fontSize: '18px'
+              }}
             >
-              {collapsed ? <MenuUnfoldOutlined size={18} /> : <MenuFoldOutlined size={18} />}
+              {collapsed ? <MenuUnfoldOutlined style={{ fontSize: '18px' }} /> : <MenuFoldOutlined style={{ fontSize: '18px' }} />}
             </div>
           </div>
 
           {/* Navigation menu */}
-          <div className="flex-1 py-4">
+          <div style={{ flex: 1 }}>
             <Menu
               theme="dark"
               mode="inline"
               selectedKeys={[location.pathname]}
               items={menuItems}
               onClick={handleMenuClick}
-              className="bg-transparent border-0 px-4"
+              className="bg-transparent border-0"
               style={{
                 backgroundColor: 'transparent',
-                fontSize: '14px',
-                lineHeight: '44px',
+                height: '100%',
               }}
             />
           </div>
 
-          {/* Footer info - Fixed at bottom */}
-          {!collapsed && (
-            <div className="p-4 border-t border-border">
-              <div className="bg-bg-surface rounded-lg p-3">
-                <div className="text-text-secondary text-xs space-y-1 text-center">
-                  <div className="font-medium text-accent-primary">WAF SaaS v1.0.0</div>
-                  <div className="opacity-75">ModSecurity + OWASP CRS</div>
-                </div>
-              </div>
-            </div>
-          )}
         </Sider>
 
         <Layout>
-          <Content className="bg-bg-primary overflow-auto p-8">
+          <Content className="bg-bg-primary" style={{ padding: '32px' }}>
             <Outlet />
           </Content>
         </Layout>
