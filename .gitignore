@@ -31,7 +31,6 @@ waf-console/node_modules/
 backend/.gradle/
 backend/build/
 backend/out/
-backend/gradle/wrapper/gradle-wrapper.jar
 
 # Maven
 target/
@@ -52,6 +51,14 @@ backend/build/
 !backend/gradle/wrapper/gradle-wrapper.jar
 !backend/**/src/main/**/build/
 !backend/**/src/test/**/build/
+
+# Configuration files (contain sensitive info)
+backend/src/main/resources/application*.yml
+backend/src/test/resources/application*.yml
+backend/src/main/resources/application*.yaml
+backend/src/test/resources/application*.yaml
+backend/src/main/resources/application*.properties
+backend/src/test/resources/application*.properties
 
 # Application logs
 *.log
