@@ -16,3 +16,57 @@ waf-console/.vite/
 # Node modules
 node_modules/
 waf-console/node_modules/
+
+# Java/Gradle
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Gradle
+backend/.gradle/
+backend/build/
+backend/out/
+backend/gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot
+backend/HELP.md
+backend/.gradle
+backend/build/
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# Application logs
+*.log
+application-*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Testing
+/coverage/
+/.nyc_output
