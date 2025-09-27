@@ -29,6 +29,11 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'   // 스키마 관리
     runtimeOnly 'com.mysql:mysql-connector-j'   // 운영용 드라이버
 
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
     // PDF 생성 및 스크린샷 관련
     implementation 'com.itextpdf:itext7-core:7.2.5'
     implementation 'org.seleniumhq.selenium:selenium-java:4.15.0'
