@@ -1,4 +1,5 @@
 # ModSecurity logs
+/modsec-logs/audit.log
 logs/
 
 # IDE files
@@ -16,3 +17,65 @@ waf-console/.vite/
 # Node modules
 node_modules/
 waf-console/node_modules/
+
+# Java/Gradle
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# Gradle
+backend/.gradle/
+backend/build/
+backend/out/
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot
+backend/HELP.md
+backend/.gradle
+backend/build/
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# Configuration files (contain sensitive info)
+backend/src/main/resources/application*.yml
+backend/src/main/resources/application*.yaml
+backend/src/main/resources/application*.properties
+# Test configurations are safe to commit
+!backend/src/test/resources/application*.yml
+!backend/src/test/resources/application*.yaml
+!backend/src/test/resources/application*.properties
+
+# Application logs
+*.log
+application-*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Testing
+/coverage/
+/.nyc_output

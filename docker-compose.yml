@@ -1,41 +1,46 @@
 services:
-  crs-nginx:
-    image: owasp/modsecurity-crs:nginx
+  waf:
+    build: ./waf
     container_name: waf
-    hostname: waf
-    restart: always
+    restart: unless-stopped
+    ports:
+      - "80:8080"     # 컨테이너는 비루트 사용자라 기본 8080/8443 리슨
     environment:
       TZ: Asia/Seoul
-      BACKEND: http://web:8000   # 프록시 대상
+      BACKEND: http://web:80         # 필수. 리버스 프록시 대상
+      SERVER_NAME: waf.local
       ERRORLOG: /var/log/nginx/error.log
-      REAL_IP_HEADER: CF-Connecting-IP
-      MODSEC_AUDIT_LOG: /var/log/modsecurity/audit.log
-      MODSEC_AUDIT_LOG_FORMAT: Native
-      MODSEC_AUDIT_ENGINE: On
-    ports:
-      - "80:8080"
-#    volumes:
-#      - ./docker/modsecurity/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-#      - ./docker/modsecurity/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+      # CRS 주요 스위치들
+      BLOCKING_PARANOIA: "2"
+      DETECTION_PARANOIA: "2"
+      ANOMALY_INBOUND: "5"
+      ANOMALY_OUTBOUND: "4"
+      MODSEC_RULE_ENGINE: "On"
+      MODSEC_AUDIT_ENGINE: "On"
+      MODSEC_AUDIT_LOG_FORMAT: "Native"
+      MODSEC_DEBUG_LOG_LEVEL: "3"
     volumes:
-      - ./modsec-logs:/var/log/modsecurity
-    networks:
-      - shared_network
-    depends_on:
-      - web
+      - ./logs/nginx:/var/log/nginx
+      - ./logs/modsecurity:/var/log/modsecurity
+    tmpfs:
+      - /tmp:rw,mode=1777
+      - /var/cache/nginx:rw,mode=1777
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "5"
+    depends_on:
+      - web
+    networks:
+      - shared
 
   web:
     image: nginx:alpine
     container_name: web
     command: sh -c "echo 'OK' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
-    networks:
-      - shared_network
+    networks: [shared]
 
 networks:
-  shared_network:
+  shared:
     driver: bridge
