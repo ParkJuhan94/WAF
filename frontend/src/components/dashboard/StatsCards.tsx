@@ -5,8 +5,8 @@ import {
   SafetyCertificateOutlined,
   ExclamationCircleOutlined,
   ClockCircleOutlined,
-  TrendingUpOutlined,
-  TrendingDownOutlined
+  RiseOutlined,
+  SafetyCertificateOutlined
 } from '@ant-design/icons';
 import { useWAFDashboardData } from '../../hooks/useRealtimeData';
 import { formatNumber, formatDuration, formatPercentage } from '../../utils/formatters';
@@ -34,7 +34,7 @@ export const StatsCards: React.FC = () => {
       title: '차단된 요청',
       value: stats.blockedRequests,
       formatter: formatNumber,
-      prefix: <ShieldOutlined className="text-danger" />,
+      prefix: <SafetyCertificateOutlined className="text-danger" />,
       valueStyle: { color: '#ff6b6b' },
     },
     {
@@ -118,7 +118,7 @@ export const StatsCards: React.FC = () => {
           title={<span className="text-text-secondary">시스템 가동 시간</span>}
           value={stats.uptime}
           formatter={(val) => formatDuration(val as number)}
-          prefix={<TrendingUpOutlined className="text-success" />}
+          prefix={<RiseOutlined className="text-success" />}
           valueStyle={{ color: '#1ec997' }}
         />
       </Card>

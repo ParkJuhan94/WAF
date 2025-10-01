@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import { ApiResponse, PaginatedResponse } from '../types/api';
-import { WAFStats, WAFStatus, Rule, AttackEvent, TrafficData } from '../types/waf';
+import { WAFStats, WAFStatus, Rule, AttackEvent, TrafficData, CustomRule, CustomRuleRequest, CustomRuleFilter, RuleStatistics, RuleType, RuleSeverity } from '../types/waf';
 import { LogEntry, LogFilter, LogStats } from '../types/logs';
 
 class ApiClient {
@@ -167,10 +167,125 @@ class ApiClient {
     return response.data;
   }
 
+  // Custom Rules APIs
+  async getCustomRules(
+    page: number = 0,
+    size: number = 20,
+    sortBy: string = 'createdAt',
+    sortDir: string = 'desc',
+    filter?: CustomRuleFilter
+  ): Promise<PaginatedResponse<CustomRule>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      sortBy,
+      sortDir,
+      ...(filter?.enabled !== undefined && { enabled: filter.enabled.toString() }),
+      ...(filter?.type && { type: filter.type }),
+      ...(filter?.severity && { severity: filter.severity }),
+      ...(filter?.targetService && { targetService: filter.targetService }),
+      ...(filter?.keyword && { keyword: filter.keyword })
+    });
+
+    const response: AxiosResponse<PaginatedResponse<CustomRule>> =
+      await this.client.get(`/v1/rules?${params}`);
+    return response.data;
+  }
+
+  async getCustomRule(id: number): Promise<CustomRule> {
+    const response: AxiosResponse<CustomRule> = await this.client.get(`/v1/rules/${id}`);
+    return response.data;
+  }
+
+  async getMyCustomRules(
+    page: number = 0,
+    size: number = 20,
+    sortBy: string = 'createdAt',
+    sortDir: string = 'desc'
+  ): Promise<PaginatedResponse<CustomRule>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      sortBy,
+      sortDir
+    });
+
+    const response: AxiosResponse<PaginatedResponse<CustomRule>> =
+      await this.client.get(`/v1/rules/my?${params}`);
+    return response.data;
+  }
+
+  async getActiveCustomRules(): Promise<CustomRule[]> {
+    const response: AxiosResponse<CustomRule[]> = await this.client.get('/v1/rules/active');
+    return response.data;
+  }
+
+  async getApplicableCustomRules(targetService: string): Promise<CustomRule[]> {
+    const response: AxiosResponse<CustomRule[]> =
+      await this.client.get(`/v1/rules/applicable?targetService=${encodeURIComponent(targetService)}`);
+    return response.data;
+  }
+
+  async getRecentlyActiveCustomRules(page: number = 0, size: number = 10): Promise<PaginatedResponse<CustomRule>> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString()
+    });
+
+    const response: AxiosResponse<PaginatedResponse<CustomRule>> =
+      await this.client.get(`/v1/rules/recent-active?${params}`);
+    return response.data;
+  }
+
+  async createCustomRule(rule: CustomRuleRequest): Promise<CustomRule> {
+    const response: AxiosResponse<CustomRule> = await this.client.post('/v1/rules', rule);
+    return response.data;
+  }
+
+  async updateCustomRule(id: number, rule: CustomRuleRequest): Promise<CustomRule> {
+    const response: AxiosResponse<CustomRule> = await this.client.put(`/v1/rules/${id}`, rule);
+    return response.data;
+  }
+
+  async deleteCustomRule(id: number): Promise<void> {
+    await this.client.delete(`/v1/rules/${id}`);
+  }
+
+  async toggleCustomRuleStatus(id: number): Promise<CustomRule> {
+    const response: AxiosResponse<CustomRule> = await this.client.patch(`/v1/rules/${id}/toggle`);
+    return response.data;
+  }
+
+  async recordCustomRuleMatch(id: number): Promise<void> {
+    await this.client.post(`/v1/rules/${id}/match`);
+  }
+
+  async recordCustomRuleBlock(id: number): Promise<void> {
+    await this.client.post(`/v1/rules/${id}/block`);
+  }
+
+  async getCustomRuleStatistics(): Promise<RuleStatistics> {
+    const response: AxiosResponse<RuleStatistics> = await this.client.get('/v1/rules/statistics');
+    return response.data;
+  }
+
+  async getRuleTypes(): Promise<RuleType[]> {
+    const response: AxiosResponse<RuleType[]> = await this.client.get('/v1/rules/types');
+    return response.data;
+  }
+
+  async getRuleSeverities(): Promise<RuleSeverity[]> {
+    const response: AxiosResponse<RuleSeverity[]> = await this.client.get('/v1/rules/severities');
+    return response.data;
+  }
+
   // Auth APIs
   async login(googleToken: string): Promise<{ token: string; user: any }> {
-    const response = await this.client.post('/auth/login', { googleToken });
-    return response.data.data;
+    const response = await this.client.post('/v1/auth/google', { idToken: googleToken });
+    return {
+      token: response.data.accessToken,
+      user: response.data.userProfile
+    };
   }
 
   async logout(): Promise<void> {

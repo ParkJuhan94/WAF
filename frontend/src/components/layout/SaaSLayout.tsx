@@ -4,6 +4,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
   SecurityScanOutlined,
+  FileTextOutlined,
   BarChartOutlined,
   SettingOutlined,
   UserOutlined,
@@ -29,6 +30,11 @@ export const SaaSLayout: React.FC = () => {
       key: '/rules',
       icon: <SecurityScanOutlined />,
       label: '룰 관리',
+    },
+    {
+      key: '/logs',
+      icon: <FileTextOutlined />,
+      label: '로그 조회',
     },
     {
       key: '/analytics',
