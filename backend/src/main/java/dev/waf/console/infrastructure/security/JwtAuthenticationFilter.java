@@ -1,7 +1,7 @@
 package dev.waf.console.infrastructure.security;
 
-import dev.waf.console.core.domain.user.User;
-import dev.waf.console.core.repository.UserRepository;
+import dev.waf.console.user.domain.User;
+import dev.waf.console.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
