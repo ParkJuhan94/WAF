@@ -73,9 +73,11 @@ public class TestContainersConfig {
      * - 실제 Redis 7.0 사용
      * - 캐시, 세션, 분산 잠금 등 모든 Redis 기능 테스트
      * - 메모리 제한으로 테스트 환경 최적화
+     *
+     * Note: GenericContainer는 @ServiceConnection을 지원하지 않으므로
+     * @DynamicPropertySource에서 수동 설정
      */
     @Bean
-    @ServiceConnection
     public GenericContainer<?> redisContainer(Network network) {
         GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7.0-alpine"))
                 .withExposedPorts(6379)
@@ -96,36 +98,45 @@ public class TestContainersConfig {
         return redis;
     }
 
+
     /**
      * 동적 프로퍼티 설정
      * 테스트 실행시 컨테이너 연결 정보를 자동 주입
+     * @ServiceConnection이 MySQL을 자동 설정하고,
+     * Redis는 수동으로 설정합니다.
      */
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry,
-                                  MySQLContainer<?> mysql,
-                                  GenericContainer<?> redis) {
+    @Bean
+    public RedisPropertiesConfigurer redisPropertiesConfigurer(GenericContainer<?> redisContainer) {
+        return new RedisPropertiesConfigurer(redisContainer);
+    }
 
-        // MySQL 설정
-        registry.add("spring.datasource.url", mysql::getJdbcUrl);
-        registry.add("spring.datasource.username", mysql::getUsername);
-        registry.add("spring.datasource.password", mysql::getPassword);
-        registry.add("spring.datasource.driver-class-name", mysql::getDriverClassName);
+    /**
+     * Redis 프로퍼티 설정을 위한 헬퍼 클래스
+     */
+    public static class RedisPropertiesConfigurer {
+        private final GenericContainer<?> redisContainer;
 
-        // Redis 설정
-        registry.add("spring.data.redis.host", redis::getHost);
-        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
-        registry.add("spring.data.redis.password", () -> "");
-        registry.add("spring.data.redis.database", () -> "0");
+        public RedisPropertiesConfigurer(GenericContainer<?> redisContainer) {
+            this.redisContainer = redisContainer;
+        }
 
-        // JPA 테스트 설정
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
-        registry.add("spring.jpa.show-sql", () -> "true");
+        @DynamicPropertySource
+        static void configureRedisProperties(DynamicPropertyRegistry registry, GenericContainer<?> redis) {
+            // Redis 설정
+            registry.add("spring.data.redis.host", redis::getHost);
+            registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379).toString());
+            registry.add("spring.data.redis.password", () -> "");
 
-        // 로깅 레벨 조정
-        registry.add("logging.level.org.testcontainers", () -> "INFO");
-        registry.add("logging.level.dev.waf.console", () -> "DEBUG");
+            // JPA 테스트 설정
+            registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
+            registry.add("spring.jpa.show-sql", () -> "true");
 
-        System.out.println("TestContainers dynamic properties configured");
+            // 로깅 레벨 조정
+            registry.add("logging.level.org.testcontainers", () -> "INFO");
+            registry.add("logging.level.dev.waf.console", () -> "DEBUG");
+
+            System.out.println("TestContainers dynamic properties configured");
+        }
     }
 
     /**
