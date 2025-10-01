@@ -29,6 +29,7 @@ public class EventConsumer {
     private final AlertService alertService;
     private final MetricsService metricsService;
     private final AuditService auditService;
+    private final ElasticsearchIndexingService elasticsearchIndexingService;
 
     /**
      * 공격 탐지 이벤트 처리
@@ -65,6 +66,9 @@ public class EventConsumer {
             // 5. 감사 로그 기록
             auditService.logSecurityEvent(event);
 
+            // 6. Elasticsearch 인덱싱
+            elasticsearchIndexingService.indexAttackEvent(event);
+
             acknowledgment.acknowledge();
             log.debug("Attack event processed successfully");
 
@@ -96,6 +100,9 @@ public class EventConsumer {
             if (event.getResponseTime() != null && event.getResponseTime() > 5000) {
                 metricsService.recordSlowResponse(event);
             }
+
+            // 4. Elasticsearch 인덱싱
+            elasticsearchIndexingService.indexAccessLogEvent(event);
 
             acknowledgment.acknowledge();
 
@@ -130,6 +137,9 @@ public class EventConsumer {
             // 3. 자동 대응 규칙 실행
             executeAutomatedResponse(event);
 
+            // 4. Elasticsearch 인덱싱
+            elasticsearchIndexingService.indexSecurityAlert(event);
+
             acknowledgment.acknowledge();
 
         } catch (Exception e) {
@@ -154,6 +164,9 @@ public class EventConsumer {
 
             // 2. 임계값 체크 및 알림
             metricsService.checkThresholds(event);
+
+            // 3. Elasticsearch 인덱싱
+            elasticsearchIndexingService.indexMetricsEvent(event);
 
             acknowledgment.acknowledge();
 
@@ -184,6 +197,9 @@ public class EventConsumer {
 
             // 3. 규정 준수 체크
             auditService.checkComplianceRules(event);
+
+            // 4. Elasticsearch 인덱싱
+            elasticsearchIndexingService.indexAuditEvent(event);
 
             acknowledgment.acknowledge();
 

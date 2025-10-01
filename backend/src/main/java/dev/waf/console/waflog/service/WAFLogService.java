@@ -1,5 +1,8 @@
 package dev.waf.console.waflog.service;
 
+import dev.waf.console.event.AccessLogEvent;
+import dev.waf.console.event.AttackDetectedEvent;
+import dev.waf.console.service.EventPublisher;
 import dev.waf.console.waflog.domain.WAFLog;
 import dev.waf.console.waflog.repository.WAFLogRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ import java.util.stream.Collectors;
 public class WAFLogService {
 
     private final WAFLogRepository wafLogRepository;
+    private final EventPublisher eventPublisher;
 
     /**
      * 최근 로그 조회 (최대 500개)
@@ -142,6 +146,10 @@ public class WAFLogService {
             WAFLog savedLog = wafLogRepository.save(wafLog);
             log.debug("WAF log saved asynchronously: {} - {} - {}",
                 savedLog.getStatus(), savedLog.getSourceIp(), savedLog.getRequestUri());
+
+            // Kafka로 이벤트 발행
+            publishToKafka(savedLog);
+
             return CompletableFuture.completedFuture(savedLog);
         } catch (Exception e) {
             log.error("Failed to save WAF log asynchronously", e);
@@ -160,6 +168,10 @@ public class WAFLogService {
         WAFLog savedLog = wafLogRepository.save(wafLog);
         log.debug("WAF log saved: {} - {} - {}",
             savedLog.getStatus(), savedLog.getSourceIp(), savedLog.getRequestUri());
+
+        // Kafka로 이벤트 발행
+        publishToKafka(savedLog);
+
         return savedLog;
     }
 
@@ -264,6 +276,69 @@ public class WAFLogService {
             .attackTypeCounts(attackTypeCounts)
             .topAttackingIPs(topAttackingIPs)
             .build();
+    }
+
+    /**
+     * WAFLog를 Kafka 이벤트로 변환하여 발행
+     */
+    private void publishToKafka(WAFLog log) {
+        try {
+            if (log.isBlocked()) {
+                // 차단된 요청은 공격 탐지 이벤트로 발행
+                AttackDetectedEvent attackEvent = AttackDetectedEvent.builder()
+                    .sourceIp(log.getSourceIp())
+                    .targetUri(log.getRequestUri())
+                    .httpMethod(log.getHttpMethod())
+                    .attackType(convertToAttackType(log.getAttackType()))
+                    .riskScore(log.getRiskScore())
+                    .signature(log.getBlockReason())
+                    .ruleId(log.getRuleId())
+                    .ruleName(log.getRuleName())
+                    .payload(null)  // 실제 구현시 추가
+                    .userAgent(log.getUserAgent())
+                    .timestamp(log.getTimestamp())
+                    .build();
+
+                eventPublisher.publishAttackDetected(attackEvent);
+                log.debug("Attack detected event published for log ID: {}", log.getId());
+            } else {
+                // 일반 요청은 접근 로그 이벤트로 발행
+                AccessLogEvent accessEvent = AccessLogEvent.builder()
+                    .clientIp(log.getSourceIp())
+                    .method(log.getHttpMethod())
+                    .uri(log.getRequestUri())
+                    .statusCode(log.getResponseStatusCode())
+                    .responseTime(log.getResponseTimeMs())
+                    .userAgent(log.getUserAgent())
+                    .referer(null)  // 실제 구현시 추가
+                    .sessionId(log.getSessionId())
+                    .userId(null)  // 실제 구현시 추가
+                    .timestamp(log.getTimestamp())
+                    .build();
+
+                eventPublisher.publishAccessLog(accessEvent);
+                log.debug("Access log event published for log ID: {}", log.getId());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to publish event to Kafka for log ID: {}", log.getId(), e);
+            // Kafka 발행 실패는 전체 로그 저장을 실패시키지 않음
+        }
+    }
+
+    /**
+     * 문자열 공격 타입을 AttackDetectedEvent.AttackType enum으로 변환
+     */
+    private AttackDetectedEvent.AttackType convertToAttackType(String attackType) {
+        if (attackType == null) {
+            return AttackDetectedEvent.AttackType.UNKNOWN;
+        }
+
+        try {
+            return AttackDetectedEvent.AttackType.valueOf(attackType.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown attack type: {}", attackType);
+            return AttackDetectedEvent.AttackType.UNKNOWN;
+        }
     }
 
     /**
