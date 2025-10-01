@@ -10,6 +10,7 @@ import { SaaSLayout } from './components/layout/SaaSLayout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { RulesPage } from './pages/RulesPage';
+import { LogsPage } from './pages/LogsPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from './pages/ProfilePage';
@@ -68,6 +69,7 @@ const App: React.FC = () => {
                 <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="dashboard" element={<DashboardPage />} />
                 <Route path="rules" element={<RulesPage />} />
+                <Route path="logs" element={<LogsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="profile" element={<ProfilePage />} />
