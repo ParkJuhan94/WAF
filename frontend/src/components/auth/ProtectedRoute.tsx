@@ -20,7 +20,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const isDevelopment = import.meta.env.DEV;
 
   // Check authentication
-  if (requireAuth && !isAuthenticated && !isDevelopment) {
+  if (requireAuth && !isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

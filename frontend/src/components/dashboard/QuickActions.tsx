@@ -5,7 +5,7 @@ import {
   BugOutlined,
   DownloadOutlined,
   SettingOutlined,
-  ShieldOutlined,
+  SafetyCertificateOutlined,
   FileTextOutlined
 } from '@ant-design/icons';
 
@@ -37,7 +37,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({ onActionClick }) => 
       key: 'emergency-block',
       title: '긴급 차단 모드',
       description: '모든 요청을 일시적으로 차단',
-      icon: <ShieldOutlined />,
+      icon: <SafetyCertificateOutlined />,
       type: 'default' as const,
       danger: true,
     },

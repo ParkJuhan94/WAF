@@ -56,3 +56,57 @@ export interface AttackEvent {
   payload: string;
   matchedRules: string[];
 }
+
+// Custom Rule types matching backend API
+export type RuleType = 'BLOCK' | 'DENY' | 'DROP' | 'LOG' | 'RATE_LIMIT' | 'REDIRECT' | 'CUSTOM';
+export type RuleSeverity = 'INFO' | 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+export interface CustomRule {
+  id: number;
+  name: string;
+  description: string;
+  ruleContent: string;
+  type: RuleType;
+  severity: RuleSeverity;
+  enabled: boolean;
+  priority: number;
+  targetService?: string;
+  targetPath?: string;
+  createdBy: {
+    id: number;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  lastMatchedAt?: string;
+  matchCount: number;
+  blockCount: number;
+}
+
+export interface CustomRuleRequest {
+  name: string;
+  description?: string;
+  ruleContent: string;
+  type: RuleType;
+  severity: RuleSeverity;
+  priority?: number;
+  targetService?: string;
+  targetPath?: string;
+}
+
+export interface CustomRuleFilter {
+  enabled?: boolean;
+  type?: RuleType;
+  severity?: RuleSeverity;
+  targetService?: string;
+  keyword?: string;
+}
+
+export interface RuleStatistics {
+  totalRules: number;
+  enabledRules: number;
+  disabledRules: number;
+  totalMatches: number;
+  totalBlocks: number;
+}
