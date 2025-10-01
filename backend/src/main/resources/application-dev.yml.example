@@ -1,0 +1,251 @@
+spring:
+  application:
+    name: waf-console-backend-dev
+
+  # 개발용 데이터소스
+  datasource:
+    url: jdbc:mysql://localhost:3306/waf_dev?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  # 개발용 JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: update  # 개발 단계에서는 자동 스키마 업데이트
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        use_sql_comments: true
+        highlight_sql: true
+
+  # Flyway 개발에서는 비활성화 (수동 스키마 관리)
+  flyway:
+    enabled: false
+
+  # 개발용 Redis 설정 (로컬)
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      timeout: 10s
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 4
+          min-idle: 1
+
+  # 캐시 설정
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000  # 5분 (개발용 짧은 TTL)
+
+  # OAuth2 개발용 설정
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:dummy-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-client-secret}
+            scope: openid,profile,email
+
+# Swagger/OpenAPI - 개발에서 활성화
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    display-request-duration: true
+  show-actuator: true
+  paths-to-match: /api/**
+  packages-to-scan: dev.waf.console
+
+# 개발용 상세 로깅
+logging:
+  level:
+    root: INFO
+    dev.waf.console: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.springframework.kafka: INFO
+    org.elasticsearch: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/waf-console-dev.log
+    max-size: 10MB
+    max-history: 7
+
+# 개발 서버 설정
+server:
+  port: 8081
+  error:
+    include-stacktrace: always  # 개발에서는 스택트레이스 표시
+    include-message: always
+    include-binding-errors: always
+
+# 애플리케이션 정보
+app:
+  version: "dev-SNAPSHOT"
+  api:
+    url: http://localhost:8081
+  debug: true  # 개발 모드 활성화
+
+  # Redis 설정
+  redis:
+    cache:
+      enabled: true
+      default-ttl-minutes: 5
+      key-prefix: "waf:dev:cache:"
+      enable-statistics: true
+    session:
+      ttl-minutes: 30
+      key-prefix: "waf:dev:session:"
+      enable-cleanup: true
+
+  # 비동기 처리 설정 (개발용 작은 풀)
+  async:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 50
+    keep-alive-seconds: 60
+    thread-name-prefix: "DEV-Async-"
+
+  # Phase 2: Kafka 설정 (로컬 개발용)
+  kafka:
+    bootstrap-servers: localhost:9092
+    topics:
+      attacks: waf.dev.attacks
+      logs: waf.dev.logs
+      alerts: waf.dev.alerts
+      metrics: waf.dev.metrics
+      audit: waf.dev.audit
+
+    producer:
+      batch-size: 8192  # 개발용 작은 배치
+      linger-ms: 5
+      compression-type: lz4
+      acks: 1  # 개발에서는 성능 우선
+      retries: 2
+
+    consumer:
+      group-id: waf-console-dev-group
+      auto-offset-reset: earliest  # 개발에서는 처음부터
+      enable-auto-commit: false
+      max-poll-records: 50
+
+  # Phase 2: Elasticsearch 설정 (로컬)
+  elasticsearch:
+    uris: http://localhost:9200
+    username:
+    password:
+    connection-timeout: 3s
+    socket-timeout: 30s
+
+  # Phase 2: Batch Processing (개발에서는 비활성화)
+  batch:
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
+# Management & Monitoring (개발용 전체 공개)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # 개발에서는 모든 엔드포인트 공개
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always  # 개발에서는 상세 정보 표시
+      show-components: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true
+            percentiles: 0.5,0.95,0.99
+  tracing:
+    enabled: false  # 개발 초기에는 비활성화
+    sampling:
+      probability: 1.0  # 활성화시 100% 샘플링
+
+# WAF Console 설정
+waf:
+  console:
+    security:
+      cors:
+        allowed-origins: "*"  # 개발에서는 모든 오리진 허용
+        allowed-methods: "*"
+        allowed-headers: "*"
+        allow-credentials: true
+      jwt:
+        secret: dev-secret-key-for-jwt-signing-minimum-256-bits-required-for-hs256-algorithm
+        expiration: 7200  # 2시간 (개발용 긴 시간)
+        refresh-expiration: 604800  # 7일
+      rate-limit:
+        enabled: false  # 개발에서는 비활성화
+
+    simulation:
+      timeout-seconds: 180
+      max-concurrent-runs: 5
+
+    report:
+      screenshot:
+        timeout-seconds: 30
+        window-width: 1920
+        window-height: 1080
+      pdf:
+        template-path: classpath:templates/report
+
+    # Phase 2: 이벤트 스트리밍 (개발 초기 비활성화)
+    events:
+      kafka:
+        enabled: false  # 필요시 수동 활성화
+        auto-create-topics: true
+      elasticsearch:
+        enabled: false  # 필요시 수동 활성화
+        auto-create-indices: true
+
+    # Phase 2: 배치 처리 (개발에서 비활성화)
+    batch:
+      log-cleanup:
+        enabled: false
+        retention-days: 7  # 개발용 짧은 보관
+      reports:
+        enabled: false
+
+    # 캐시 정책
+    cache:
+      attack-patterns:
+        ttl-minutes: 10  # 개발용 짧은 TTL
+        max-entries: 1000
+      user-sessions:
+        ttl-minutes: 30
+        cleanup-interval-minutes: 5
