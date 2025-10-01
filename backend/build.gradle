@@ -18,6 +18,16 @@ repositories {
 	mavenCentral()
 }
 
+ext {
+    set('springCloudVersion', '2024.0.1')
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
 dependencies {
     // App
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -37,6 +47,40 @@ dependencies {
     // Swagger/OpenAPI
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
+    // Redis & Caching
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'com.github.ben-manes.caffeine:caffeine:3.1.8'
+
+    // Async & Event Processing
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Phase 2: Kafka & Message Streaming
+    implementation 'org.springframework.kafka:spring-kafka'
+    implementation 'org.apache.kafka:kafka-streams'
+    implementation 'org.springframework.cloud:spring-cloud-stream'
+    implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka'
+
+    // Phase 2: Elasticsearch & Search
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    implementation 'co.elastic.clients:elasticsearch-java:8.15.0'
+
+    // Phase 2: Monitoring & Metrics
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    implementation 'io.opentelemetry:opentelemetry-exporter-zipkin'
+    implementation 'io.opentelemetry:opentelemetry-exporter-otlp'
+    implementation 'org.springframework.boot:spring-boot-actuator-autoconfigure'
+
+    // Phase 2: Security Enhancements
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+
+    // Phase 2: Batch Processing
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+    implementation 'org.springframework.batch:spring-batch-integration'
+
     // PDF 생성 및 스크린샷 관련
     implementation 'com.itextpdf:itext7-core:7.2.5'
     implementation 'org.seleniumhq.selenium:selenium-java:4.15.0'
@@ -46,8 +90,13 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-testcontainers'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.kafka:spring-kafka-test'
+    testImplementation 'org.springframework.batch:spring-batch-test'
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:mysql'
+    testImplementation 'org.testcontainers:kafka'
+    testImplementation 'org.testcontainers:elasticsearch'
+    testImplementation 'org.testcontainers:testcontainers:1.19.8'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testRuntimeOnly 'com.h2database:h2' // 테스트용 인메모리 DB
     testRuntimeOnly 'com.mysql:mysql-connector-j' // 테스트에서도 드라이버 필요

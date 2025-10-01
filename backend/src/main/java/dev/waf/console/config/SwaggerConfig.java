@@ -70,8 +70,7 @@ public class SwaggerConfig {
                     - 📊 **실시간 대시보드** - WebSocket 기반 실시간 트래픽 모니터링
                     - 🛡️ **WAF 룰 관리** - ModSecurity 룰 생성/편집/배포
                     - 🎯 **공격 시뮬레이션** - 5가지 공격 유형 차단 테스트
-                    - 📈 **고급 분석** - 공격 패턴 분석 및 위험도 평가
-                    - 📝 **환불 조건 검증** - DVWA 테스트 및 PDF 증거 수집
+                    - 📈 **고급 분석** - 공격 패턴 분석 및 위험도 평가                   
 
                     ### 🏗️ 아키텍처
                     - **Clean Architecture** + **CQRS** + **Event-Driven Architecture**

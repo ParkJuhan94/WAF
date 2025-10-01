@@ -1,0 +1,237 @@
+package dev.waf.console.config;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.test.context.ActiveProfiles;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+/**
+ * Phase 1 설정 통합 테스트
+ *
+ * Redis, 캐시, 비동기 처리 등 모든 Phase 1 설정이 정상적으로 작동하는지 검증
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@DisplayName("Phase 1 Configuration Integration Test")
+class Phase1ConfigurationTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private CacheManager cacheManager;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private Executor taskExecutor;
+
+    @Autowired
+    private Executor ioTaskExecutor;
+
+    @Autowired
+    private Executor cpuTaskExecutor;
+
+    @Autowired
+    private Executor reportTaskExecutor;
+
+    @Autowired
+    private AsyncTestService asyncTestService;
+
+    @Test
+    @DisplayName("Redis 연결 및 기본 작업 테스트")
+    void testRedisConnection() {
+        // given
+        String testKey = "test:phase1:redis";
+        String testValue = "Redis is working!";
+
+        // when
+        redisTemplate.opsForValue().set(testKey, testValue);
+        String retrievedValue = (String) redisTemplate.opsForValue().get(testKey);
+
+        // then
+        assertThat(retrievedValue).isEqualTo(testValue);
+        assertThat(redisTemplate.hasKey(testKey)).isTrue();
+
+        // cleanup
+        redisTemplate.delete(testKey);
+    }
+
+    @Test
+    @DisplayName("캐시 매니저 설정 테스트")
+    void testCacheManagerConfiguration() {
+        // given
+        String cacheName = "test-cache";
+        String cacheKey = "test-key";
+        String cacheValue = "cached-value";
+
+        // when
+        var cache = cacheManager.getCache(cacheName);
+
+        // then
+        assertThat(cacheManager).isNotNull();
+        assertThat(cache).isNotNull();
+
+        // 캐시 저장 및 조회 테스트
+        cache.put(cacheKey, cacheValue);
+        var cachedItem = cache.get(cacheKey);
+
+        assertThat(cachedItem).isNotNull();
+        assertThat(cachedItem.get()).isEqualTo(cacheValue);
+
+        // cleanup
+        cache.clear();
+    }
+
+    @Test
+    @DisplayName("다중 레벨 캐시 작동 테스트")
+    void testMultiLevelCaching() {
+        // given
+        String l1CacheName = "user-profile-l1";
+        String l2CacheName = "user-profile";
+        String testKey = "user:123";
+        String testData = "User Profile Data";
+
+        // when & then
+        var l1Cache = cacheManager.getCache(l1CacheName);
+        var l2Cache = cacheManager.getCache(l2CacheName);
+
+        assertThat(l1Cache).isNotNull();
+        assertThat(l2Cache).isNotNull();
+
+        // L1 캐시 테스트
+        l1Cache.put(testKey, testData);
+        assertThat(l1Cache.get(testKey)).isNotNull();
+        assertThat(l1Cache.get(testKey).get()).isEqualTo(testData);
+
+        // cleanup
+        l1Cache.clear();
+        l2Cache.clear();
+    }
+
+    @Test
+    @DisplayName("JSON 직렬화/역직렬화 테스트")
+    void testJsonSerialization() throws Exception {
+        // given
+        TestData testData = new TestData("Test Name", 123, true);
+
+        // when
+        String json = objectMapper.writeValueAsString(testData);
+        TestData deserializedData = objectMapper.readValue(json, TestData.class);
+
+        // then
+        assertThat(json).isNotNull();
+        assertThat(deserializedData).isNotNull();
+        assertThat(deserializedData.getName()).isEqualTo("Test Name");
+        assertThat(deserializedData.getValue()).isEqualTo(123);
+        assertThat(deserializedData.isActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("비동기 실행자 설정 테스트")
+    void testAsyncExecutors() {
+        // then
+        assertThat(taskExecutor).isNotNull();
+        assertThat(ioTaskExecutor).isNotNull();
+        assertThat(cpuTaskExecutor).isNotNull();
+        assertThat(reportTaskExecutor).isNotNull();
+
+        // 실행자 타입 검증
+        assertThat(taskExecutor.getClass().getSimpleName()).contains("ThreadPoolTaskExecutor");
+        assertThat(ioTaskExecutor.getClass().getSimpleName()).contains("ThreadPoolTaskExecutor");
+        assertThat(cpuTaskExecutor.getClass().getSimpleName()).contains("ThreadPoolTaskExecutor");
+        assertThat(reportTaskExecutor.getClass().getSimpleName()).contains("ThreadPoolTaskExecutor");
+    }
+
+    @Test
+    @DisplayName("비동기 메소드 실행 테스트")
+    void testAsyncMethodExecution() throws Exception {
+        // when
+        CompletableFuture<String> future = asyncTestService.processAsync("test-data");
+
+        // then
+        assertThat(future).isNotNull();
+        assertThat(future.isDone()).isFalse(); // 비동기 실행이므로 즉시 완료되지 않음
+
+        // 결과 대기
+        String result = future.get();
+        assertThat(result).isEqualTo("Processed: test-data");
+    }
+
+    @Test
+    @DisplayName("Redis 및 캐시 통합 테스트")
+    void testRedisCacheIntegration() {
+        // given
+        String testKey = "integration:test";
+        String testValue = "Integration Test Value";
+
+        // Redis 직접 저장
+        setRedisData(testKey, testValue);
+
+        // then
+        assertThat(existsRedisKey(testKey)).isTrue();
+        assertThat(getRedisData(testKey)).isEqualTo(testValue);
+
+        // 캐시 매니저를 통한 접근
+        var cache = cacheManager.getCache("test-integration");
+        if (cache != null) {
+            cache.put(testKey, testValue);
+            assertThat(cache.get(testKey)).isNotNull();
+        }
+    }
+
+    /**
+     * 테스트용 데이터 클래스
+     */
+    public static class TestData {
+        private String name;
+        private int value;
+        private boolean active;
+
+        public TestData() {}
+
+        public TestData(String name, int value, boolean active) {
+            this.name = name;
+            this.value = value;
+            this.active = active;
+        }
+
+        // getters and setters
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public int getValue() { return value; }
+        public void setValue(int value) { this.value = value; }
+        public boolean isActive() { return active; }
+        public void setActive(boolean active) { this.active = active; }
+    }
+
+    /**
+     * 비동기 테스트를 위한 서비스
+     */
+    @Service
+    public static class AsyncTestService {
+
+        @Async("taskExecutor")
+        public CompletableFuture<String> processAsync(String data) {
+            try {
+                Thread.sleep(100); // 비동기 처리 시뮬레이션
+                return CompletableFuture.completedFuture("Processed: " + data);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return CompletableFuture.failedFuture(e);
+            }
+        }
+    }
+}
