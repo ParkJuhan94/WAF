@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: waf-console-backend-test
+
+  # 테스트용 데이터소스 (TestContainers에서 동적 설정)
+  datasource:
+    # URL, username, password는 TestContainersConfig에서 동적 주입
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5  # 테스트용 작은 풀 사이즈
+      minimum-idle: 1
+      connection-timeout: 5000
+      idle-timeout: 30000
+
+  # JPA 테스트 설정
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 테스트 실행시마다 스키마 재생성
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        generate_statistics: false  # 테스트 성능 향상
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  # 테스트용 Redis 설정 (TestContainers에서 동적 설정)
+  data:
+    redis:
+      # host, port는 TestContainersConfig에서 동적 주입
+      timeout: 5s
+      lettuce:
+        pool:
+          max-active: 4   # 테스트용 작은 풀 사이즈
+          max-idle: 2
+          min-idle: 0
+
+  # 테스트용 캐시 설정
+  cache:
+    type: redis
+    redis:
+      time-to-live: 30000  # 30초 (테스트용 짧은 TTL)
+
+  # Flyway 비활성화 (TestContainers에서 create-drop 사용)
+  flyway:
+    enabled: false
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test-client-id
+            client-secret: test-client-secret
+
+# 테스트용 서버 설정
+server:
+  port: 0  # 랜덤 포트 사용으로 포트 충돌 방지
+
+# 테스트용 로깅 설정
+logging:
+  level:
+    root: WARN
+    dev.waf.console: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: DEBUG
+    org.testcontainers: INFO
+    com.github.dockerjava: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"
+
+# 테스트용 애플리케이션 설정
+app:
+  version: "test-version"
+  api:
+    url: "http://localhost"
+  debug: true  # 테스트에서는 디버그 모드 활성화
+
+  # 테스트용 Redis 설정
+  redis:
+    cache:
+      enabled: true
+      default-ttl-minutes: 1    # 테스트용 짧은 TTL
+      key-prefix: "test:cache:"
+      enable-statistics: true
+    session:
+      ttl-minutes: 5            # 테스트용 짧은 세션 시간
+      key-prefix: "test:session:"
+      enable-cleanup: true
+
+  # 테스트용 비동기 처리 설정 (작은 풀 사이즈)
+  async:
+    core-pool-size: 2
+    max-pool-size: 5
+    queue-capacity: 10
+    keep-alive-seconds: 30
+    thread-name-prefix: "TEST-Async-"
+
+# 테스트용 WAF 설정
+waf:
+  console:
+    security:
+      cors:
+        allowed-origins: "*"     # 테스트에서는 모든 오리진 허용
+        allowed-methods: "*"
+        allowed-headers: "*"
+        allow-credentials: true
+    report:
+      screenshot:
+        timeout-seconds: 5      # 테스트용 짧은 타임아웃
+        window-width: 1024      # 테스트용 작은 해상도
+        window-height: 768
+      pdf:
+        template-path: classpath:templates/test-report
+
+# Swagger 테스트 설정
+springdoc:
+  api-docs:
+    enabled: false  # 테스트에서는 API 문서 비활성화
+  swagger-ui:
+    enabled: false  # 테스트에서는 Swagger UI 비활성화
+
+# Actuator 테스트 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always

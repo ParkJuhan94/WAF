@@ -1,0 +1,365 @@
+package dev.waf.console.config;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import dev.waf.console.infrastructure.security.JwtAuthenticationFilter;
+import dev.waf.console.infrastructure.security.RateLimitingFilter;
+
+import jakarta.servlet.http.HttpServletResponse;
+import javax.crypto.spec.SecretKeySpec;
+import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+
+/**
+ * 향상된 보안 설정
+ *
+ * Enterprise급 보안 기능:
+ * - JWT 기반 인증/인가
+ * - OAuth2 Resource Server 설정
+ * - 고급 CORS 정책
+ * - 보안 헤더 강화
+ * - API Rate Limiting
+ * - 메소드 레벨 보안
+ * - CSRF 보호 (SPA 환경 최적화)
+ *
+ * 보안 계층:
+ * 1. CORS 및 보안 헤더
+ * 2. Rate Limiting
+ * 3. JWT 인증
+ * 4. 역할 기반 인가
+ * 5. 메소드 레벨 보안
+ *
+ * @author WAF Console Team
+ * @since 2.0.0
+ */
+@Slf4j
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true, securedEnabled = true)
+@RequiredArgsConstructor
+public class EnhancedSecurityConfig {
+
+    @Value("${app.security.jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${app.security.cors.allowed-origins}")
+    private String[] allowedOrigins;
+
+    @Value("${app.security.cors.allowed-methods}")
+    private String[] allowedMethods;
+
+    @Value("${app.security.rate-limit.requests-per-minute:100}")
+    private int rateLimitRequestsPerMinute;
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
+
+    /**
+     * 보안 필터 체인 설정
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            // CORS 설정
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+            // CSRF 설정 (SPA용 최적화)
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers(
+                    "/api/**",           // API 엔드포인트
+                    "/actuator/**",      // Actuator 엔드포인트
+                    "/swagger-ui/**",    // Swagger UI
+                    "/api-docs/**"       // API 문서
+                )
+                .csrfTokenRepository(org.springframework.security.web.csrf.CookieCsrfTokenRepository.withHttpOnlyFalse())
+            )
+
+            // 세션 관리 (Stateless)
+            .sessionManagement(session ->
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+
+            // OAuth2 Resource Server 설정
+            .oauth2ResourceServer(oauth2 -> oauth2
+                .jwt(jwt -> jwt
+                    .decoder(jwtDecoder())
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter())
+                )
+                .authenticationEntryPoint((request, response, ex) -> {
+                    log.warn("Unauthorized access attempt: {} from {}",
+                        request.getRequestURI(), request.getRemoteAddr());
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                })
+                .accessDeniedHandler((request, response, ex) -> {
+                    log.warn("Access denied: {} for user {} from {}",
+                        request.getRequestURI(),
+                        request.getUserPrincipal() != null ? request.getUserPrincipal().getName() : "anonymous",
+                        request.getRemoteAddr());
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+                })
+            )
+
+            // 엔드포인트 접근 권한 설정
+            .authorizeHttpRequests(authz -> authz
+                // 공개 엔드포인트
+                .requestMatchers(
+                    "/api/auth/**",        // 인증 관련
+                    "/actuator/health",    // 헬스체크
+                    "/actuator/info",      // 정보
+                    "/swagger-ui/**",      // Swagger UI
+                    "/api-docs/**",        // API 문서
+                    "/error"               // 에러 페이지
+                ).permitAll()
+
+                // 관리자 전용 엔드포인트
+                .requestMatchers(
+                    "/api/admin/**",       // 관리자 API
+                    "/actuator/**"         // 전체 Actuator (관리자만)
+                ).hasRole("ADMIN")
+
+                // 프리미엄 사용자 엔드포인트
+                .requestMatchers(
+                    "/api/reports/**",     // 리포트 기능
+                    "/api/analytics/**"    // 분석 기능
+                ).hasAnyRole("PREMIUM_USER", "ADMIN")
+
+                // 일반 사용자 엔드포인트
+                .requestMatchers("/api/**").hasAnyRole("USER", "PREMIUM_USER", "ADMIN")
+
+                // 그 외 모든 요청은 인증 필요
+                .anyRequest().authenticated()
+            )
+
+            // 보안 헤더 설정
+            .headers(headers -> headers
+                // XSS 보호
+                .contentTypeOptions(contentType -> contentType.and())
+                .frameOptions(frame -> frame.sameOrigin())
+
+                // HTTPS 강제 (운영 환경)
+                .httpStrictTransportSecurity(hsts -> hsts
+                    .maxAgeInSeconds(31536000)  // 1년
+                    .includeSubdomains(true)
+                    .preload(true)
+                )
+
+                // Referrer 정책
+                .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+
+                // Content Security Policy
+                .contentSecurityPolicy(csp -> csp
+                    .policyDirectives(
+                        "default-src 'self'; " +
+                        "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
+                        "style-src 'self' 'unsafe-inline'; " +
+                        "img-src 'self' data: https:; " +
+                        "font-src 'self' https:; " +
+                        "connect-src 'self' https: ws: wss:; " +
+                        "frame-ancestors 'none'; " +
+                        "base-uri 'self'; " +
+                        "form-action 'self'"
+                    )
+                )
+
+                // 권한 정책 (Permissions Policy)
+                .and()
+                .addHeaderWriter((request, response) -> {
+                    response.setHeader("Permissions-Policy",
+                        "camera=(), " +
+                        "microphone=(), " +
+                        "geolocation=(), " +
+                        "payment=(), " +
+                        "usb=(), " +
+                        "magnetometer=(), " +
+                        "gyroscope=(), " +
+                        "accelerometer=()");
+                })
+            )
+
+            // 커스텀 필터 추가
+            .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationFilter.class);
+
+        log.info("Enhanced security configuration applied with JWT and rate limiting");
+        return http.build();
+    }
+
+    /**
+     * CORS 설정
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        // 허용 오리진 설정
+        configuration.setAllowedOriginPatterns(Arrays.asList(allowedOrigins));
+
+        // 허용 메소드 설정
+        configuration.setAllowedMethods(Arrays.asList(allowedMethods));
+
+        // 허용 헤더 설정
+        configuration.setAllowedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "X-Requested-With",
+            "X-CSRF-Token",
+            "Cache-Control",
+            "Accept",
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+        ));
+
+        // 노출 헤더 설정
+        configuration.setExposedHeaders(Arrays.asList(
+            "X-Total-Count",
+            "X-WAF-Status",
+            "X-Rate-Limit-Remaining",
+            "X-Request-ID"
+        ));
+
+        // 자격 증명 허용
+        configuration.setAllowCredentials(true);
+
+        // 캐시 시간 설정 (1시간)
+        configuration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        log.info("CORS configuration applied for origins: {}", Arrays.toString(allowedOrigins));
+        return source;
+    }
+
+    /**
+     * JWT 디코더
+     */
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        SecretKeySpec secretKey = new SecretKeySpec(
+            jwtSecret.getBytes(),
+            MacAlgorithm.HS512.getName()
+        );
+        return NimbusJwtDecoder.withSecretKey(secretKey)
+            .macAlgorithm(MacAlgorithm.HS512)
+            .cache(Duration.ofMinutes(5))  // JWT 캐시 (5분)
+            .build();
+    }
+
+    /**
+     * JWT 인코더
+     */
+    @Bean
+    public JwtEncoder jwtEncoder() {
+        SecretKeySpec secretKey = new SecretKeySpec(
+            jwtSecret.getBytes(),
+            MacAlgorithm.HS512.getName()
+        );
+        return new NimbusJwtEncoder(new ImmutableSecret<>(secretKey));
+    }
+
+    /**
+     * JWT 인증 컨버터
+     */
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        authoritiesConverter.setAuthorityPrefix("ROLE_");
+        authoritiesConverter.setAuthoritiesClaimName("roles");
+
+        JwtAuthenticationConverter authenticationConverter = new JwtAuthenticationConverter();
+        authenticationConverter.setJwtGrantedAuthoritiesConverter(authoritiesConverter);
+        authenticationConverter.setPrincipalClaimName("sub");
+
+        return authenticationConverter;
+    }
+
+    /**
+     * 보안 이벤트 리스너
+     */
+    @Bean
+    public SecurityEventListener securityEventListener() {
+        return new SecurityEventListener();
+    }
+
+    /**
+     * 보안 이벤트 처리
+     */
+    public static class SecurityEventListener {
+
+        @org.springframework.context.event.EventListener
+        public void handleAuthenticationSuccess(
+                org.springframework.security.authentication.event.AuthenticationSuccessEvent event) {
+            String username = event.getAuthentication().getName();
+            log.info("Authentication successful for user: {}", username);
+
+            // 성공적인 로그인 메트릭 기록
+            // metricsService.recordAuthenticationSuccess(username);
+        }
+
+        @org.springframework.context.event.EventListener
+        public void handleAuthenticationFailure(
+                org.springframework.security.authentication.event.AbstractAuthenticationFailureEvent event) {
+            String username = event.getAuthentication().getName();
+            String errorMessage = event.getException().getMessage();
+
+            log.warn("Authentication failed for user: {} - {}", username, errorMessage);
+
+            // 실패한 로그인 메트릭 기록
+            // metricsService.recordAuthenticationFailure(username, errorMessage);
+        }
+
+        @org.springframework.context.event.EventListener
+        public void handleAccessDenied(
+                org.springframework.security.access.event.AuthorizationFailureEvent event) {
+            String username = event.getAuthentication().getName();
+            String resource = event.getSource().toString();
+
+            log.warn("Access denied for user: {} to resource: {}", username, resource);
+
+            // 접근 거부 메트릭 기록
+            // metricsService.recordAccessDenied(username, resource);
+        }
+
+        @org.springframework.context.event.EventListener
+        public void handleSessionCreation(
+                org.springframework.security.web.session.HttpSessionCreatedEvent event) {
+            log.debug("HTTP session created: {}", event.getSession().getId());
+
+            // 세션 생성 메트릭 기록
+            // metricsService.recordSessionCreated();
+        }
+
+        @org.springframework.context.event.EventListener
+        public void handleSessionDestroy(
+                org.springframework.security.web.session.HttpSessionDestroyedEvent event) {
+            log.debug("HTTP session destroyed: {}", event.getSession().getId());
+
+            // 세션 종료 메트릭 기록
+            // metricsService.recordSessionDestroyed();
+        }
+    }
+}

@@ -4,43 +4,59 @@ services:
     container_name: waf
     restart: unless-stopped
     ports:
-      - "80:8080"     # 컨테이너는 비루트 사용자라 기본 8080/8443 리슨
+      - "80:8080"     # 외부 80 → 컨테이너 8080 (비루트 사용자)
     environment:
       TZ: Asia/Seoul
-      BACKEND: http://web:80         # 필수. 리버스 프록시 대상
+      BACKEND: http://web:80         # 리버스 프록시 대상 백엔드
       SERVER_NAME: waf.local
       ERRORLOG: /var/log/nginx/error.log
-      # CRS 주요 스위치들
-      BLOCKING_PARANOIA: "2"
-      DETECTION_PARANOIA: "2"
-      ANOMALY_INBOUND: "5"
-      ANOMALY_OUTBOUND: "4"
-      MODSEC_RULE_ENGINE: "On"
-      MODSEC_AUDIT_ENGINE: "On"
+      
+      # CRS Paranoia Level (1~4, 높을수록 엄격)
+      BLOCKING_PARANOIA: "2"         # 실제 차단에 적용되는 룰 레벨
+      DETECTION_PARANOIA: "2"        # 탐지만 하는 룰 레벨
+      
+      # Anomaly Scoring (낮을수록 엄격, 기본 5/4)
+      ANOMALY_INBOUND: "5"           # 요청 스코어 임계값
+      ANOMALY_OUTBOUND: "4"          # 응답 스코어 임계값
+      
+      # ModSecurity 엔진 설정
+      MODSEC_RULE_ENGINE: "On"       # On=차단, DetectionOnly=로그만
+      MODSEC_AUDIT_ENGINE: "DetectionOnly"  # 오탐 튜닝 단계용, 이후 On으로 변경
       MODSEC_AUDIT_LOG_FORMAT: "Native"
-      MODSEC_DEBUG_LOG_LEVEL: "3"
+      MODSEC_DEBUG_LOG_LEVEL: "3"    # 0~9, 디버깅 시 5 이상 권장
+      
     volumes:
+      # 로그 수집 경로
       - ./logs/nginx:/var/log/nginx
       - ./logs/modsecurity:/var/log/modsecurity
+      
+      # 커스텀 룰 (CRS 전후 실행)
+      - ./docker/modsecurity/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+      - ./docker/modsecurity/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+      
+    # 메모리 기반 임시 파일 시스템 (성능 최적화)
     tmpfs:
       - /tmp:rw,mode=1777
       - /var/cache/nginx:rw,mode=1777
+      
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
         max-file: "5"
+        
     depends_on:
       - web
     networks:
-      - shared
+      - shared_network
 
   web:
     image: nginx:alpine
     container_name: web
     command: sh -c "echo 'OK' > /usr/share/nginx/html/index.html && nginx -g 'daemon off;'"
-    networks: [shared]
+    networks:
+      - shared_network
 
 networks:
-  shared:
+  shared_network:
     driver: bridge
