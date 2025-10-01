@@ -1,4 +1,5 @@
 # ModSecurity logs
+/modsec-logs/audit.log
 logs/
 
 # IDE files
