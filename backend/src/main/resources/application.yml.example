@@ -2,71 +2,177 @@ spring:
   application:
     name: waf-console-backend
 
+  # Database Configuration
   datasource:
     url: jdbc:mysql://localhost:3306/waf?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:your_password_here}
+    password: ${DB_PASSWORD:your-password-here}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 20000
 
+  # JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: create-drop  # 개발: create-drop, 운영: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
+  # Flyway (Database Migration)
   flyway:
     enabled: false
-    baseline-on-migrate: true
-    locations: classpath:db/migration
 
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 10s
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  # Cache (Redis-based)
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000  # 10 minutes
+
+  # OAuth2 (Google)
   security:
     oauth2:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
-            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id-here}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret-here}
             scope: openid,profile,email
 
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: when-authorized
+  # Kafka
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: waf-console-group
 
+  # Elasticsearch
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+    username: ${ELASTICSEARCH_USERNAME:}
+    password: ${ELASTICSEARCH_PASSWORD:}
+    connection-timeout: 1s
+    socket-timeout: 30s
+
+# API Documentation (Swagger)
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operations-sorter: alpha
+    tags-sorter: alpha
+  paths-to-match: /api/**
+  packages-to-scan: dev.waf.console
+
+# Logging
 logging:
   level:
+    root: INFO
     dev.waf.console: DEBUG
     org.springframework.security: DEBUG
     org.hibernate.SQL: DEBUG
+  file:
+    name: logs/waf-console.log
 
+# Server
 server:
-  port: 8080
+  port: 8081
   error:
     include-stacktrace: never
     include-message: always
 
+# Actuator & Monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    enabled: ${TRACING_ENABLED:false}
+    sampling:
+      probability: 0.1
+
+# WAF Console Application Settings
 waf:
   console:
+    # Security Settings
     security:
       cors:
-        allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
-        allowed-methods: GET,POST,PUT,DELETE,OPTIONS
+        allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+        allowed-methods: GET,POST,PUT,DELETE,OPTIONS,PATCH
         allowed-headers: "*"
         allow-credentials: true
-    simulation:
-      timeout-seconds: 300
-      max-concurrent-runs: 10
-    report:
-      screenshot:
-        timeout-seconds: 30
-        window-width: 1920
-        window-height: 1080
-      pdf:
-        template-path: classpath:templates/report
+      jwt:
+        secret: ${JWT_SECRET:change-this-to-your-256-bit-secret-key-for-jwt-signing}
+        expiration: 3600        # 1 hour
+        refresh-expiration: 86400  # 24 hours
+      rate-limit:
+        enabled: true
+        global:
+          requests-per-minute: 100
+        user:
+          requests-per-minute: 200
+
+    # Event Streaming (Kafka & Elasticsearch)
+    events:
+      kafka:
+        enabled: ${KAFKA_ENABLED:false}
+        auto-create-topics: true
+      elasticsearch:
+        enabled: ${ELASTICSEARCH_ENABLED:false}
+        auto-create-indices: true
+
+    # Batch Processing
+    batch:
+      log-cleanup:
+        enabled: true
+        retention-days: 30
+        schedule: "0 0 2 * * *"  # Daily at 2 AM
+      reports:
+        enabled: false
+
+# Development Tips:
+# 1. Copy this file to application.yml in the same directory
+# 2. Replace all ${...} placeholders with actual values
+# 3. Never commit application.yml (it's in .gitignore)
+#
+# Required Environment Variables:
+# - DB_PASSWORD: MySQL database password
+# - GOOGLE_CLIENT_ID: Google OAuth client ID
+# - GOOGLE_CLIENT_SECRET: Google OAuth client secret
+# - JWT_SECRET: 256-bit secret key for JWT signing
+#
+# Optional Environment Variables:
+# - REDIS_HOST, REDIS_PORT, REDIS_PASSWORD
+# - KAFKA_BOOTSTRAP_SERVERS, KAFKA_ENABLED
+# - ELASTICSEARCH_URIS, ELASTICSEARCH_ENABLED
+# - CORS_ALLOWED_ORIGINS
+# - TRACING_ENABLED
