@@ -201,7 +201,12 @@ public class ElasticsearchIndexingService {
                 b.must(m -> m.term(t -> t.field("attackType").value(attackType)));
             }
             if (minRiskScore != null) {
-                b.must(m -> m.range(r -> r.field("riskScore").gte(co.elastic.clients.json.JsonData.of(minRiskScore))));
+                b.must(m -> m.range(r -> r
+                    .number(n -> n
+                        .field("riskScore")
+                        .gte(Double.valueOf(minRiskScore))
+                    )
+                ));
             }
             return b;
         }));

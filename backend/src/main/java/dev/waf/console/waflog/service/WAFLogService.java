@@ -281,46 +281,50 @@ public class WAFLogService {
     /**
      * WAFLog를 Kafka 이벤트로 변환하여 발행
      */
-    private void publishToKafka(WAFLog log) {
+    private void publishToKafka(WAFLog wafLog) {
         try {
-            if (log.isBlocked()) {
+            if (wafLog.isBlocked()) {
                 // 차단된 요청은 공격 탐지 이벤트로 발행
                 AttackDetectedEvent attackEvent = AttackDetectedEvent.builder()
-                    .sourceIp(log.getSourceIp())
-                    .targetUri(log.getRequestUri())
-                    .httpMethod(log.getHttpMethod())
-                    .attackType(convertToAttackType(log.getAttackType()))
-                    .riskScore(log.getRiskScore())
-                    .signature(log.getBlockReason())
-                    .ruleId(log.getRuleId())
-                    .ruleName(log.getRuleName())
+                    .sourceIp(wafLog.getSourceIp())
+                    .targetUrl(wafLog.getRequestUri())
+                    .httpMethod(wafLog.getHttpMethod())
+                    .attackType(convertToAttackType(wafLog.getAttackType()))
+                    .riskScore(wafLog.getRiskScore())
+                    .signature(wafLog.getBlockReason())
+                    .ruleId(wafLog.getRuleId())
+                    .ruleName(wafLog.getRuleName())
                     .payload(null)  // 실제 구현시 추가
-                    .userAgent(log.getUserAgent())
-                    .timestamp(log.getTimestamp())
+                    .userAgent(wafLog.getUserAgent())
                     .build();
 
+                // WAFEvent 부모 클래스 필드 설정
+                attackEvent.setTimestamp(wafLog.getTimestamp());
+
                 eventPublisher.publishAttackDetected(attackEvent);
-                log.debug("Attack detected event published for log ID: {}", log.getId());
+                log.debug("Attack detected event published for log ID: {}", wafLog.getId());
             } else {
                 // 일반 요청은 접근 로그 이벤트로 발행
                 AccessLogEvent accessEvent = AccessLogEvent.builder()
-                    .clientIp(log.getSourceIp())
-                    .method(log.getHttpMethod())
-                    .uri(log.getRequestUri())
-                    .statusCode(log.getResponseStatusCode())
-                    .responseTime(log.getResponseTimeMs())
-                    .userAgent(log.getUserAgent())
+                    .clientIp(wafLog.getSourceIp())
+                    .method(wafLog.getHttpMethod())
+                    .uri(wafLog.getRequestUri())
+                    .statusCode(wafLog.getResponseStatusCode())
+                    .responseTime(wafLog.getResponseTimeMs())
+                    .userAgent(wafLog.getUserAgent())
                     .referer(null)  // 실제 구현시 추가
-                    .sessionId(log.getSessionId())
+                    .sessionId(wafLog.getSessionId())
                     .userId(null)  // 실제 구현시 추가
-                    .timestamp(log.getTimestamp())
                     .build();
 
+                // WAFEvent 부모 클래스 필드 설정
+                accessEvent.setTimestamp(wafLog.getTimestamp());
+
                 eventPublisher.publishAccessLog(accessEvent);
-                log.debug("Access log event published for log ID: {}", log.getId());
+                log.debug("Access log event published for log ID: {}", wafLog.getId());
             }
         } catch (Exception e) {
-            log.warn("Failed to publish event to Kafka for log ID: {}", log.getId(), e);
+            log.warn("Failed to publish event to Kafka for log ID: {}", wafLog.getId(), e);
             // Kafka 발행 실패는 전체 로그 저장을 실패시키지 않음
         }
     }
