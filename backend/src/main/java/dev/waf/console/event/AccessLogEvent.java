@@ -1,8 +1,10 @@
 package dev.waf.console.event;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 /**
  * 접근 로그 이벤트
@@ -14,7 +16,9 @@ import lombok.NoArgsConstructor;
  * @since 2.0.0
  */
 @Data
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class AccessLogEvent extends WAFEvent {
 
