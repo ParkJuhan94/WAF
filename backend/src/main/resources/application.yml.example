@@ -146,6 +146,12 @@ waf:
       kafka:
         enabled: ${KAFKA_ENABLED:false}
         auto-create-topics: true
+        topics:
+          attacks: waf.attacks
+          logs: waf.logs
+          alerts: waf.alerts
+          metrics: waf.metrics
+          audit: waf.audit
       elasticsearch:
         enabled: ${ELASTICSEARCH_ENABLED:false}
         auto-create-indices: true

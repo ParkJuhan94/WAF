@@ -53,19 +53,19 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id:waf-console-group}")
     private String groupId;
 
-    @Value("${app.kafka.topics.attacks:waf.attacks}")
+    @Value("${waf.console.events.kafka.topics.attacks:waf.attacks}")
     private String attacksTopic;
 
-    @Value("${app.kafka.topics.logs:waf.logs}")
+    @Value("${waf.console.events.kafka.topics.logs:waf.logs}")
     private String logsTopic;
 
-    @Value("${app.kafka.topics.alerts:waf.alerts}")
+    @Value("${waf.console.events.kafka.topics.alerts:waf.alerts}")
     private String alertsTopic;
 
-    @Value("${app.kafka.topics.metrics:waf.metrics}")
+    @Value("${waf.console.events.kafka.topics.metrics:waf.metrics}")
     private String metricsTopic;
 
-    @Value("${app.kafka.topics.audit:waf.audit}")
+    @Value("${waf.console.events.kafka.topics.audit:waf.audit}")
     private String auditTopic;
 
     /**
