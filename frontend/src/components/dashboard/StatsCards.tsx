@@ -5,8 +5,7 @@ import {
   SafetyCertificateOutlined,
   ExclamationCircleOutlined,
   ClockCircleOutlined,
-  RiseOutlined,
-  SafetyCertificateOutlined
+  RiseOutlined
 } from '@ant-design/icons';
 import { useWAFDashboardData } from '../../hooks/useRealtimeData';
 import { formatNumber, formatDuration, formatPercentage } from '../../utils/formatters';
