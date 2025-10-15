@@ -1,6 +1,6 @@
 services:
   waf:
-    build: ./waf
+    image: owasp/modsecurity-crs:nginx-alpine
     container_name: waf
     restart: unless-stopped
     ports:
@@ -21,18 +21,18 @@ services:
       
       # ModSecurity 엔진 설정
       MODSEC_RULE_ENGINE: "On"       # On=차단, DetectionOnly=로그만
-      MODSEC_AUDIT_ENGINE: "DetectionOnly"  # 오탐 튜닝 단계용, 이후 On으로 변경
+      MODSEC_AUDIT_ENGINE: "RelevantOnly"  # 오탐 튜닝 단계용, 이후 On으로 변경
       MODSEC_AUDIT_LOG_FORMAT: "Native"
       MODSEC_DEBUG_LOG_LEVEL: "3"    # 0~9, 디버깅 시 5 이상 권장
       
     volumes:
       # 로그 수집 경로
-      - ./logs/nginx:/var/log/nginx
-      - ./logs/modsecurity:/var/log/modsecurity
-      
+      - ../logs/nginx:/var/log/nginx
+      - ../logs/modsecurity:/var/log/modsecurity
+
       # 커스텀 룰 (CRS 전후 실행)
-      - ./waf/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
-      - ./waf/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
+      - ../waf/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+      - ../waf/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
       
     # 메모리 기반 임시 파일 시스템 (성능 최적화)
     tmpfs:
@@ -97,7 +97,7 @@ services:
 
   # Zookeeper (for Kafka)
   zookeeper:
-    profiles: ["monitoring"]
+#    profiles: ["monitoring"]
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: waf-zookeeper
     environment:
@@ -113,7 +113,7 @@ services:
 
   # Kafka
   kafka:
-    profiles: ["monitoring"]
+#    profiles: ["monitoring"]
     image: confluentinc/cp-kafka:7.5.0
     container_name: waf-kafka
     depends_on:
@@ -145,7 +145,7 @@ services:
 
   # Elasticsearch
   elasticsearch:
-    profiles: ["monitoring"]
+#    profiles: ["monitoring"]
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
     container_name: waf-elasticsearch
     environment:
