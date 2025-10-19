@@ -12,19 +12,22 @@ services:
       ERRORLOG: /var/log/nginx/error.log
       
       # CRS Paranoia Level (1~4, 높을수록 엄격)
-      BLOCKING_PARANOIA: "2"         # 실제 차단에 적용되는 룰 레벨
-      DETECTION_PARANOIA: "2"        # 탐지만 하는 룰 레벨
+      BLOCKING_PARANOIA: 2         # 실제 차단에 적용되는 룰 레벨
+      DETECTION_PARANOIA: 2        # 탐지만 하는 룰 레벨
       
-      # Anomaly Scoring (낮을수록 엄격, 기본 5/4)
-      ANOMALY_INBOUND: "5"           # 요청 스코어 임계값
-      ANOMALY_OUTBOUND: "4"          # 응답 스코어 임계값
+      # Anomaly Scoring (낮을수록 엄격, Default 5/4)
+      ANOMALY_INBOUND: 5           # 요청 스코어 임계값
+      ANOMALY_OUTBOUND: 4          # 응답 스코어 임계값
       
       # ModSecurity 엔진 설정
-      MODSEC_RULE_ENGINE: "On"       # On=차단, DetectionOnly=로그만
-      MODSEC_AUDIT_ENGINE: "RelevantOnly"  # 오탐 튜닝 단계용, 이후 On으로 변경
+      MODSEC_RULE_ENGINE: "On"       # On=차단(Default), DetectionOnly=로그만
+      MODSEC_AUDIT_ENGINE: "RelevantOnly"  # 오탐 튜닝 단계용(Default), 이후 On으로 변경
       MODSEC_AUDIT_LOG_FORMAT: "Native"
-      MODSEC_DEBUG_LOG_LEVEL: "3"    # 0~9, 디버깅 시 5 이상 권장
-      
+
+      # 🆕 파일 크기 제한 (10MB/50MB)
+      MAX_FILE_SIZE: 10485760
+      COMBINED_FILE_SIZES: 52428800
+
     volumes:
       # 로그 수집 경로
       - ../logs/nginx:/var/log/nginx
@@ -57,7 +60,6 @@ services:
     networks:
       - shared_network
 
-  # MySQL Database
   mysql:
     image: mysql:8.0
     container_name: waf-mysql
@@ -78,7 +80,6 @@ services:
     networks:
       - shared_network
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: waf-redis
@@ -95,9 +96,7 @@ services:
     networks:
       - shared_network
 
-  # Zookeeper (for Kafka)
   zookeeper:
-#    profiles: ["monitoring"]
     image: confluentinc/cp-zookeeper:7.5.0
     container_name: waf-zookeeper
     environment:
@@ -111,9 +110,7 @@ services:
     networks:
       - shared_network
 
-  # Kafka
   kafka:
-#    profiles: ["monitoring"]
     image: confluentinc/cp-kafka:7.5.0
     container_name: waf-kafka
     depends_on:
@@ -143,9 +140,7 @@ services:
     networks:
       - shared_network
 
-  # Elasticsearch
   elasticsearch:
-#    profiles: ["monitoring"]
     image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
     container_name: waf-elasticsearch
     environment:
