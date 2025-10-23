@@ -149,13 +149,13 @@ public class AuthController {
     public ResponseEntity<AuthResponse> googleLogin(
         @Parameter(
             name = "request",
-            description = "Google OAuth Authorization Code 요청",
+            description = "Google ID Token 로그인 요청",
             required = true,
             schema = @Schema(implementation = GoogleLoginRequest.class)
         )
         @Valid @RequestBody GoogleLoginRequest request
     ) {
-        AuthResponse response = authService.authenticateWithGoogle(request.getCode());
+        AuthResponse response = authService.authenticateWithGoogle(request.getIdToken());
         return ResponseEntity.ok(response);
     }
 
