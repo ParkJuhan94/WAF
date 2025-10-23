@@ -41,39 +41,6 @@
    - `KAFKA_ENABLED=true`: Kafka 사용 시
    - `ELASTICSEARCH_ENABLED=true`: Elasticsearch 사용 시
 
-## 🚀 실행 방법
-
-### 기본 실행 (WAF + MySQL + Redis)
-```bash
-docker-compose up
-```
-
-### 모니터링 포함 전체 실행
-```bash
-docker-compose --profile monitoring up
-```
-
-### 백그라운드 실행
-```bash
-# 기본
-docker-compose up -d
-
-# 모니터링 포함
-docker-compose --profile monitoring up -d
-```
-
-### 종료
-```bash
-# 기본 서비스 종료
-docker-compose down
-
-# 모니터링 포함 전체 종료
-docker-compose --profile monitoring down
-
-# 볼륨까지 삭제
-docker-compose down -v
-```
-
 ### 서비스 구성
 - **기본 서비스** (항상 실행)
   - `waf`: WAF 컨테이너 (Nginx + ModSecurity)
@@ -81,7 +48,7 @@ docker-compose down -v
   - `mysql`: MySQL 데이터베이스
   - `redis`: Redis 캐시
 
-- **모니터링 서비스** (`--profile monitoring` 옵션 필요)
+- **모니터링 서비스**
   - `zookeeper`: Kafka Zookeeper
   - `kafka`: Kafka 메시지 브로커
   - `elasticsearch`: Elasticsearch 검색 엔진
