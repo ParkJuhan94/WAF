@@ -289,11 +289,11 @@ class ApiClient {
   }
 
   async logout(): Promise<void> {
-    await this.client.post('/auth/logout');
+    await this.client.post('/v1/auth/logout');
   }
 
   async refreshToken(): Promise<{ token: string }> {
-    const response = await this.client.post('/auth/refresh');
+    const response = await this.client.post('/v1/auth/refresh');
     return response.data.data;
   }
 }
