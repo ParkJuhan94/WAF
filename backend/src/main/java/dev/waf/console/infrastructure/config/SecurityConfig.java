@@ -27,6 +27,21 @@ public class SecurityConfig {
     @Value("${waf.console.security.cors.allowed-origins}")
     private String allowedOrigins;
 
+    @Value("${waf.console.security.cors.allowed-methods}")
+    private String allowedMethods;
+
+    @Value("${waf.console.security.cors.allowed-headers}")
+    private String allowedHeaders;
+
+    @Value("${waf.console.security.cors.allow-credentials}")
+    private boolean allowCredentials;
+
+    @Value("${waf.console.security.cors.exposed-headers}")
+    private String exposedHeaders;
+
+    @Value("${waf.console.security.cors.max-age:3600}")
+    private long maxAge;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -45,12 +60,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // 환경변수에서 CORS allowed origins 로드 (콤마로 구분)
+
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
-        configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L); // preflight 캐싱
+        configuration.setAllowedMethods(Arrays.asList(allowedMethods.split(",")));
+        configuration.setAllowedHeaders(Arrays.asList(allowedHeaders.split(",")));
+        configuration.setAllowCredentials(allowCredentials);
+        configuration.setExposedHeaders(Arrays.asList(exposedHeaders.split(",")));
+        configuration.setMaxAge(maxAge); // preflight 캐싱
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
