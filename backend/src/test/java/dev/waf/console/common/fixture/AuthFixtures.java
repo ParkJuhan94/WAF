@@ -20,78 +20,78 @@ public class AuthFixtures {
      * 기본 AuthResponse 생성
      */
     public static AuthResponse createDefaultAuthResponse() {
-        return AuthResponse.builder()
-            .accessToken(DEFAULT_ACCESS_TOKEN)
-            .refreshToken(DEFAULT_REFRESH_TOKEN)
-            .expiresIn(DEFAULT_EXPIRES_IN)
-            .tokenType(DEFAULT_TOKEN_TYPE)
-            .userProfile(createDefaultUserProfile())
-            .build();
+        return new AuthResponse(
+            DEFAULT_ACCESS_TOKEN,
+            DEFAULT_REFRESH_TOKEN,
+            DEFAULT_EXPIRES_IN,
+            DEFAULT_TOKEN_TYPE,
+            createDefaultUserProfile()
+        );
     }
 
     /**
      * User 엔티티로부터 AuthResponse 생성
      */
     public static AuthResponse createAuthResponseFromUser(User user) {
-        return AuthResponse.builder()
-            .accessToken(DEFAULT_ACCESS_TOKEN)
-            .refreshToken(DEFAULT_REFRESH_TOKEN)
-            .expiresIn(DEFAULT_EXPIRES_IN)
-            .tokenType(DEFAULT_TOKEN_TYPE)
-            .userProfile(createUserProfileFromUser(user))
-            .build();
+        return new AuthResponse(
+            DEFAULT_ACCESS_TOKEN,
+            DEFAULT_REFRESH_TOKEN,
+            DEFAULT_EXPIRES_IN,
+            DEFAULT_TOKEN_TYPE,
+            createUserProfileFromUser(user)
+        );
     }
 
     /**
      * 커스텀 토큰으로 AuthResponse 생성
      */
     public static AuthResponse createAuthResponseWithTokens(String accessToken, String refreshToken) {
-        return AuthResponse.builder()
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
-            .expiresIn(DEFAULT_EXPIRES_IN)
-            .tokenType(DEFAULT_TOKEN_TYPE)
-            .userProfile(createDefaultUserProfile())
-            .build();
+        return new AuthResponse(
+            accessToken,
+            refreshToken,
+            DEFAULT_EXPIRES_IN,
+            DEFAULT_TOKEN_TYPE,
+            createDefaultUserProfile()
+        );
     }
 
     /**
      * 기본 UserProfile 생성
      */
     public static AuthResponse.UserProfile createDefaultUserProfile() {
-        return AuthResponse.UserProfile.builder()
-            .id("1")
-            .email(UserFixtures.DEFAULT_EMAIL)
-            .name(UserFixtures.DEFAULT_NAME)
-            .profileImage(UserFixtures.DEFAULT_PROFILE_IMAGE)
-            .role(UserRole.FREE_USER)
-            .build();
+        return new AuthResponse.UserProfile(
+            "1",
+            UserFixtures.DEFAULT_EMAIL,
+            UserFixtures.DEFAULT_NAME,
+            UserFixtures.DEFAULT_PROFILE_IMAGE,
+            UserRole.FREE_USER
+        );
     }
 
     /**
      * 관리자 UserProfile 생성
      */
     public static AuthResponse.UserProfile createAdminUserProfile() {
-        return AuthResponse.UserProfile.builder()
-            .id("1")
-            .email("admin@example.com")
-            .name("Admin User")
-            .profileImage(UserFixtures.DEFAULT_PROFILE_IMAGE)
-            .role(UserRole.ADMIN)
-            .build();
+        return new AuthResponse.UserProfile(
+            "1",
+            "admin@example.com",
+            "Admin User",
+            UserFixtures.DEFAULT_PROFILE_IMAGE,
+            UserRole.ADMIN
+        );
     }
 
     /**
      * User 엔티티로부터 UserProfile 생성
      */
     public static AuthResponse.UserProfile createUserProfileFromUser(User user) {
-        return AuthResponse.UserProfile.builder()
-            .id(user.getId() != null ? user.getId().toString() : "1")
-            .email(user.getEmail())
-            .name(user.getName())
-            .profileImage(user.getProfileImage())
-            .role(user.getRole())
-            .build();
+        return new AuthResponse.UserProfile(
+            user.getId() != null ? user.getId().toString() : "1",
+            user.getEmail(),
+            user.getName(),
+            user.getProfileImage(),
+            user.getRole()
+        );
     }
 
     /**
@@ -103,51 +103,51 @@ public class AuthFixtures {
             String name,
             UserRole role
     ) {
-        return AuthResponse.UserProfile.builder()
-            .id(id)
-            .email(email)
-            .name(name)
-            .profileImage(UserFixtures.DEFAULT_PROFILE_IMAGE)
-            .role(role)
-            .build();
+        return new AuthResponse.UserProfile(
+            id,
+            email,
+            name,
+            UserFixtures.DEFAULT_PROFILE_IMAGE,
+            role
+        );
     }
 
     /**
      * 만료 시간이 짧은 AuthResponse 생성 (테스트용)
      */
     public static AuthResponse createShortLivedAuthResponse() {
-        return AuthResponse.builder()
-            .accessToken(DEFAULT_ACCESS_TOKEN)
-            .refreshToken(DEFAULT_REFRESH_TOKEN)
-            .expiresIn(60L) // 1분
-            .tokenType(DEFAULT_TOKEN_TYPE)
-            .userProfile(createDefaultUserProfile())
-            .build();
+        return new AuthResponse(
+            DEFAULT_ACCESS_TOKEN,
+            DEFAULT_REFRESH_TOKEN,
+            60L, // 1분
+            DEFAULT_TOKEN_TYPE,
+            createDefaultUserProfile()
+        );
     }
 
     /**
      * 만료 시간이 긴 AuthResponse 생성 (테스트용)
      */
     public static AuthResponse createLongLivedAuthResponse() {
-        return AuthResponse.builder()
-            .accessToken(DEFAULT_ACCESS_TOKEN)
-            .refreshToken(DEFAULT_REFRESH_TOKEN)
-            .expiresIn(86400L) // 24시간
-            .tokenType(DEFAULT_TOKEN_TYPE)
-            .userProfile(createDefaultUserProfile())
-            .build();
+        return new AuthResponse(
+            DEFAULT_ACCESS_TOKEN,
+            DEFAULT_REFRESH_TOKEN,
+            86400L, // 24시간
+            DEFAULT_TOKEN_TYPE,
+            createDefaultUserProfile()
+        );
     }
 
     /**
      * Refresh Token이 없는 AuthResponse 생성
      */
     public static AuthResponse createAuthResponseWithoutRefreshToken() {
-        return AuthResponse.builder()
-            .accessToken(DEFAULT_ACCESS_TOKEN)
-            .refreshToken(null)
-            .expiresIn(DEFAULT_EXPIRES_IN)
-            .tokenType(DEFAULT_TOKEN_TYPE)
-            .userProfile(createDefaultUserProfile())
-            .build();
+        return new AuthResponse(
+            DEFAULT_ACCESS_TOKEN,
+            null,
+            DEFAULT_EXPIRES_IN,
+            DEFAULT_TOKEN_TYPE,
+            createDefaultUserProfile()
+        );
     }
 }

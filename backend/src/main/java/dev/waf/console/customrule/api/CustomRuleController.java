@@ -146,20 +146,20 @@ public class CustomRuleController {
 
         Long userId = getUserIdFromToken(token);
         CustomRule rule = customRuleService.createRule(
-                request.getName(),
-                request.getDescription(),
-                request.getRuleContent(),
-                request.getType(),
-                request.getSeverity(),
+                request.name(),
+                request.description(),
+                request.ruleContent(),
+                request.type(),
+                request.severity(),
                 userId
         );
 
         // 대상 범위 설정 (있는 경우)
-        if (request.getTargetService() != null || request.getTargetPath() != null) {
+        if (request.targetService() != null || request.targetPath() != null) {
             rule = customRuleService.setRuleTargetScope(
                     rule.getId(),
-                    request.getTargetService(),
-                    request.getTargetPath(),
+                    request.targetService(),
+                    request.targetPath(),
                     userId
             );
         }
@@ -179,20 +179,20 @@ public class CustomRuleController {
         Long userId = getUserIdFromToken(token);
         CustomRule rule = customRuleService.updateRule(
                 id,
-                request.getName(),
-                request.getDescription(),
-                request.getRuleContent(),
-                request.getType(),
-                request.getSeverity(),
-                request.getPriority(),
+                request.name(),
+                request.description(),
+                request.ruleContent(),
+                request.type(),
+                request.severity(),
+                request.priority(),
                 userId
         );
 
         // 대상 범위 설정
         rule = customRuleService.setRuleTargetScope(
                 id,
-                request.getTargetService(),
-                request.getTargetPath(),
+                request.targetService(),
+                request.targetPath(),
                 userId
         );
 
