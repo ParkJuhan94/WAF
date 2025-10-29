@@ -155,7 +155,7 @@ public class AuthController {
         )
         @Valid @RequestBody GoogleLoginRequest request
     ) {
-        AuthResponse response = authService.authenticateWithGoogle(request.getIdToken());
+        AuthResponse response = authService.authenticateWithGoogle(request.idToken());
         return ResponseEntity.ok(response);
     }
 

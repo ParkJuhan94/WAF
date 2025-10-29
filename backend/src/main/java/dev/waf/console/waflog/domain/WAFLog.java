@@ -166,6 +166,62 @@ public class WAFLog {
     }
 
     /**
+     * 정적 팩토리 메서드 - 성공 로그 생성
+     */
+    public static WAFLog createSuccessLog(String sourceIp, String httpMethod, String requestUri,
+                                         String userAgent, Long responseTimeMs, Integer responseStatusCode) {
+        return WAFLog.builder()
+            .sourceIp(sourceIp)
+            .httpMethod(httpMethod)
+            .requestUri(requestUri)
+            .userAgent(userAgent)
+            .status(LogStatus.SUCCESS)
+            .responseTimeMs(responseTimeMs)
+            .responseStatusCode(responseStatusCode)
+            .timestamp(LocalDateTime.now())
+            .build();
+    }
+
+    /**
+     * 정적 팩토리 메서드 - 차단 로그 생성
+     */
+    public static WAFLog createBlockedLog(String sourceIp, String httpMethod, String requestUri,
+                                         String userAgent, String attackType, Integer riskScore,
+                                         String ruleId, String ruleName, String blockReason) {
+        return WAFLog.builder()
+            .sourceIp(sourceIp)
+            .httpMethod(httpMethod)
+            .requestUri(requestUri)
+            .userAgent(userAgent)
+            .status(LogStatus.BLOCKED)
+            .attackType(attackType)
+            .riskScore(riskScore)
+            .ruleId(ruleId)
+            .ruleName(ruleName)
+            .blockReason(blockReason)
+            .responseStatusCode(403)
+            .timestamp(LocalDateTime.now())
+            .build();
+    }
+
+    /**
+     * 정적 팩토리 메서드 - 에러 로그 생성
+     */
+    public static WAFLog createErrorLog(String sourceIp, String httpMethod, String requestUri,
+                                       String userAgent, String blockReason) {
+        return WAFLog.builder()
+            .sourceIp(sourceIp)
+            .httpMethod(httpMethod)
+            .requestUri(requestUri)
+            .userAgent(userAgent)
+            .status(LogStatus.ERROR)
+            .blockReason(blockReason)
+            .responseStatusCode(500)
+            .timestamp(LocalDateTime.now())
+            .build();
+    }
+
+    /**
      * 로그가 차단된 요청인지 확인
      */
     public boolean isBlocked() {

@@ -51,6 +51,20 @@ public class User {
         this.lastLoginAt = LocalDateTime.now();
     }
 
+    /**
+     * 정적 팩토리 메서드 - Google OAuth 사용자 생성
+     */
+    public static User createGoogleUser(String email, String name, String profileImage, String providerId) {
+        return new User(email, name, profileImage, "google", providerId);
+    }
+
+    /**
+     * 정적 팩토리 메서드 - OAuth 사용자 생성 (범용)
+     */
+    public static User createOAuthUser(String email, String name, String profileImage, String provider, String providerId) {
+        return new User(email, name, profileImage, provider, providerId);
+    }
+
     public void updateLastLogin() {
         this.lastLoginAt = LocalDateTime.now();
     }

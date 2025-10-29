@@ -62,19 +62,20 @@ public class AuthService {
             // JWT 토큰 발급
             String accessToken = jwtTokenProvider.createToken(user.getId().toString(), user.getEmail());
 
-            return AuthResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(accessToken) // 실제로는 별도 refresh token
-                    .expiresIn(3600L) // 1시간
-                    .tokenType("Bearer")
-                    .userProfile(AuthResponse.UserProfile.builder()
-                            .id(user.getId().toString())
-                            .email(user.getEmail())
-                            .name(user.getName())
-                            .profileImage(user.getProfileImage())
-                            .role(user.getRole())
-                            .build())
-                    .build();
+            // Record 생성자 사용
+            return new AuthResponse(
+                    accessToken,
+                    accessToken, // 실제로는 별도 refresh token
+                    3600L, // 1시간
+                    "Bearer",
+                    new AuthResponse.UserProfile(
+                            user.getId().toString(),
+                            user.getEmail(),
+                            user.getName(),
+                            user.getProfileImage(),
+                            user.getRole()
+                    )
+            );
 
         } catch (Exception e) {
             log.error("Google ID token verification failed", e);
@@ -89,11 +90,20 @@ public class AuthService {
 
         String newAccessToken = jwtTokenProvider.createToken(userId, user.getEmail());
 
-        return AuthResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(refreshToken)
-                .expiresIn(86400L)
-                .build();
+        // Record 생성자 사용
+        return new AuthResponse(
+                newAccessToken,
+                refreshToken,
+                86400L,
+                "Bearer",
+                new AuthResponse.UserProfile(
+                        user.getId().toString(),
+                        user.getEmail(),
+                        user.getName(),
+                        user.getProfileImage(),
+                        user.getRole()
+                )
+        );
     }
 
     public AuthResponse.UserProfile getCurrentUser(String token) {
@@ -101,17 +111,19 @@ public class AuthService {
         User user = userRepository.findById(Long.parseLong(userId))
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        return AuthResponse.UserProfile.builder()
-                .id(user.getId().toString())
-                .email(user.getEmail())
-                .name(user.getName())
-                .profileImage(user.getProfileImage())
-                .role(user.getRole())
-                .build();
+        // Record 생성자 사용
+        return new AuthResponse.UserProfile(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getName(),
+                user.getProfileImage(),
+                user.getRole()
+        );
     }
 
     private User createNewUser(String email, String name, String profileImage, String providerId) {
-        User user = new User(email, name, profileImage, "google", providerId);
+        // 정적 팩토리 메서드 사용
+        User user = User.createGoogleUser(email, name, profileImage, providerId);
         return userRepository.save(user);
     }
 }
