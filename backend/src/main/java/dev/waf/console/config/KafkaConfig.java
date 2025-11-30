@@ -198,7 +198,7 @@ public class KafkaConfig {
      */
     @Bean
     public NewTopic attacksTopic() {
-        return new NewTopic(attacksTopic, 3, (short) 2)  // 3 파티션, 2 복제본
+        return new NewTopic(attacksTopic, 3, (short) 1)  // 3 파티션, 1 복제본
             .configs(Map.of(
                 "cleanup.policy", "delete",
                 "retention.ms", "604800000",     // 7일 보존
@@ -211,7 +211,7 @@ public class KafkaConfig {
      */
     @Bean
     public NewTopic logsTopic() {
-        return new NewTopic(logsTopic, 6, (short) 2)     // 6 파티션 (높은 처리량)
+        return new NewTopic(logsTopic, 3, (short) 1)     // 3 파티션, 1 복제본
             .configs(Map.of(
                 "cleanup.policy", "delete",
                 "retention.ms", "86400000",      // 1일 보존 (로그 특성상)
@@ -224,7 +224,7 @@ public class KafkaConfig {
      */
     @Bean
     public NewTopic alertsTopic() {
-        return new NewTopic(alertsTopic, 2, (short) 3)   // 2 파티션, 3 복제본 (고가용성)
+        return new NewTopic(alertsTopic, 3, (short) 1)   // 3 파티션, 1 복제본
             .configs(Map.of(
                 "cleanup.policy", "delete",
                 "retention.ms", "2592000000",    // 30일 보존
@@ -237,7 +237,7 @@ public class KafkaConfig {
      */
     @Bean
     public NewTopic metricsTopic() {
-        return new NewTopic(metricsTopic, 4, (short) 2)  // 4 파티션
+        return new NewTopic(metricsTopic, 3, (short) 1)  // 3 파티션, 1 복제본
             .configs(Map.of(
                 "cleanup.policy", "delete",
                 "retention.ms", "259200000",     // 3일 보존
@@ -250,7 +250,7 @@ public class KafkaConfig {
      */
     @Bean
     public NewTopic auditTopic() {
-        return new NewTopic(auditTopic, 2, (short) 3)    // 높은 내구성
+        return new NewTopic(auditTopic, 3, (short) 1)    // 3 파티션, 1 복제본
             .configs(Map.of(
                 "cleanup.policy", "delete",
                 "retention.ms", "7776000000",    // 90일 보존 (규정 준수)

@@ -127,6 +127,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_NUM_PARTITIONS: 3
       KAFKA_LOG_RETENTION_HOURS: 168
       KAFKA_LOG_SEGMENT_BYTES: 1073741824
       KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
@@ -141,22 +142,35 @@ services:
       - shared_network
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.18.1
     container_name: waf-elasticsearch
     environment:
+      - node.name=waf-es-01
+      - cluster.name=waf-cluster
       - discovery.type=single-node
       - xpack.security.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.http.ssl.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"  # 개발: 512m, 운영: 2g
+      - bootstrap.memory_lock=true  # 성능 최적화
+      - indices.memory.index_buffer_size=30%
+    ulimits: # 리소스 제한 추가
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     ports:
       - "9200:9200"
       - "9300:9300"
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: [ "CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s  # 시작 유예 시간
     networks:
       - shared_network
 
