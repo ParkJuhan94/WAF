@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Typography, Space, message } from 'antd';
-import { GoogleOutlined } from '@ant-design/icons';
+import { Card, Typography, Space, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/useAuthStore';
 
@@ -16,10 +15,11 @@ export const GoogleLogin: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuthStore();
+  const googleButtonRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const initializeGoogleSignIn = () => {
-      if (window.google) {
+      if (window.google && googleButtonRef.current) {
         try {
           window.google.accounts.id.initialize({
             client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
@@ -29,7 +29,21 @@ export const GoogleLogin: React.FC = () => {
             ux_mode: 'popup',
             context: 'signin'
           });
-          console.log('Google Sign-In initialized successfully');
+
+          // Render the Google Sign-In button
+          window.google.accounts.id.renderButton(
+            googleButtonRef.current,
+            {
+              theme: 'filled_blue',
+              size: 'large',
+              width: 350,
+              text: 'signin_with',
+              shape: 'rectangular',
+              logo_alignment: 'left'
+            }
+          );
+
+          console.log('Google Sign-In initialized and button rendered successfully');
         } catch (error) {
           console.error('Failed to initialize Google Sign-In:', error);
         }
@@ -55,7 +69,7 @@ export const GoogleLogin: React.FC = () => {
       // JWT 토큰 디코딩 (base64url 디코딩)
       const payload = JSON.parse(atob(credential.split('.')[1]));
 
-      console.log('Google 로그인 성공:', payload);
+      console.log('✅ Google 로그인 성공:', payload);
 
       // 사용자 정보 저장
       await login(credential);
@@ -63,34 +77,10 @@ export const GoogleLogin: React.FC = () => {
       message.success(`환영합니다, ${payload.name}님!`);
       navigate('/dashboard');
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error);
       message.error('로그인에 실패했습니다.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = () => {
-    setLoading(true);
-
-    if (window.google) {
-      try {
-        window.google.accounts.id.prompt((notification: any) => {
-          console.log('Google prompt notification:', notification);
-          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-            console.log('Prompt not displayed, trying renderButton approach');
-            setLoading(false);
-            message.warning('팝업이 차단되었습니다. 다시 시도해주세요.');
-          }
-        });
-      } catch (error) {
-        console.error('Google login error:', error);
-        setLoading(false);
-        message.error('Google 로그인 중 오류가 발생했습니다.');
-      }
-    } else {
-      setLoading(false);
-      message.error('Google 로그인 서비스를 초기화하는 중입니다. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -112,16 +102,10 @@ export const GoogleLogin: React.FC = () => {
             </Text>
           </div>
 
-          <Button
-            type="primary"
-            size="large"
-            icon={<GoogleOutlined />}
-            onClick={handleGoogleLogin}
-            loading={loading}
-            className="w-full bg-accent-primary border-accent-primary hover:bg-opacity-80"
-          >
-            Google로 로그인
-          </Button>
+          {/* Google Sign-In Button Container */}
+          <div className="flex justify-center">
+            <div ref={googleButtonRef}></div>
+          </div>
 
           <div className="text-center">
             <Text className="text-text-secondary text-sm">
