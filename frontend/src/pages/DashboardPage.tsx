@@ -1,6 +1,6 @@
 import React from 'react';
-import { MockDashboard } from '../components/dashboard/MockDashboard';
+import { Dashboard } from '../components/dashboard/Dashboard';
 
 export const DashboardPage: React.FC = () => {
-  return <MockDashboard />;
+  return <Dashboard />;
 };
