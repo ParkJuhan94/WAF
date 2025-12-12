@@ -89,4 +89,8 @@ public interface CustomRuleRepository extends JpaRepository<CustomRule, Long> {
     @Query("SELECT r FROM CustomRule r WHERE r.createdAt BETWEEN :startDate AND :endDate")
     List<CustomRule> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate,
                                            @Param("endDate") LocalDateTime endDate);
+
+    // 가장 최근 룰 업데이트 시간 조회 (대시보드용)
+    @Query("SELECT MAX(r.updatedAt) FROM CustomRule r")
+    LocalDateTime findLatestUpdateTime();
 }
