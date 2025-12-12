@@ -168,4 +168,29 @@ public interface WAFLogRepository extends JpaRepository<WAFLog, Long> {
      */
     @Query("SELECT COUNT(w) FROM WAFLog w WHERE w.ruleId = :ruleId AND w.status = 'BLOCKED' AND w.timestamp >= :since")
     long countBlockedByRuleSince(@Param("ruleId") String ruleId, @Param("since") LocalDateTime since);
+
+    /**
+     * 시간대별 트래픽 데이터 집계
+     * 1시간 단위로 그룹화하여 통계 반환
+     *
+     * @param startTime 시작 시간
+     * @param endTime 종료 시간
+     * @return 시간대별 집계 데이터 [hour, total, blocked, allowed, avg_response_time]
+     */
+    @Query(value = """
+        SELECT
+            DATE_FORMAT(timestamp, '%Y-%m-%d %H:00:00') as hour,
+            COUNT(*) as total,
+            SUM(CASE WHEN status = 'BLOCKED' THEN 1 ELSE 0 END) as blocked,
+            SUM(CASE WHEN status = 'SUCCESS' THEN 1 ELSE 0 END) as allowed,
+            COALESCE(AVG(response_time_ms), 0.0) as avg_response_time
+        FROM waf_logs
+        WHERE timestamp >= :startTime AND timestamp < :endTime
+        GROUP BY DATE_FORMAT(timestamp, '%Y-%m-%d %H:00:00')
+        ORDER BY hour
+        """, nativeQuery = true)
+    List<Object[]> getTrafficDataByHour(
+        @Param("startTime") LocalDateTime startTime,
+        @Param("endTime") LocalDateTime endTime
+    );
 }
