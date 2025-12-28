@@ -8,18 +8,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 @SpringBootApplication
-@EnableJpaRepositories(basePackages = {
-    "dev.waf.console.user.repository",
-    "dev.waf.console.customrule.repository",
-    "dev.waf.console.waflog.repository"
-})
-@EntityScan(basePackages = {
-    "dev.waf.console.user.domain",
-    "dev.waf.console.customrule.domain",
-    "dev.waf.console.waflog.domain"
-})
 @EnableJpaAuditing
 @EnableAsync
+@EnableJpaRepositories(basePackages = "dev.waf.console")
+@EntityScan(basePackages = "dev.waf.console")
 public class BackendApplication {
 
 	public static void main(String[] args) {

@@ -9,11 +9,18 @@ export const useRealtimeData = () => {
   const wafStore = useWAFStore();
   const logStore = useLogStore();
 
-  // Setup WebSocket connection and event handlers
+  // Setup WebSocket connection with JWT token
   useEffect(() => {
     const connectWebSocket = async () => {
       try {
-        await wafWebSocket.connect();
+        // JWT 토큰 가져오기 (로컬스토리지)
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          console.warn('No JWT token available for WebSocket connection');
+          return;
+        }
+
+        await wafWebSocket.connect(token);
       } catch (error) {
         console.error('Failed to connect WebSocket:', error);
       }

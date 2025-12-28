@@ -30,6 +30,7 @@ public class EventConsumer {
     private final MetricsService metricsService;
     private final AuditService auditService;
     private final ElasticsearchIndexingService elasticsearchIndexingService;
+    private final WebSocketBroadcastService webSocketBroadcastService;
 
     /**
      * 공격 탐지 이벤트 처리
@@ -69,6 +70,9 @@ public class EventConsumer {
             // 6. Elasticsearch 인덱싱
             elasticsearchIndexingService.indexAttackEvent(event);
 
+            // 7. WebSocket 브로드캐스트
+            webSocketBroadcastService.broadcastAttackEvent(event);
+
             acknowledgment.acknowledge();
             log.debug("Attack event processed successfully");
 
@@ -103,6 +107,9 @@ public class EventConsumer {
 
             // 4. Elasticsearch 인덱싱
             elasticsearchIndexingService.indexAccessLogEvent(event);
+
+            // 5. WebSocket 브로드캐스트
+            webSocketBroadcastService.broadcastTrafficUpdate(event);
 
             acknowledgment.acknowledge();
 
