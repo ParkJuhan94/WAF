@@ -5,6 +5,7 @@ import { StatsCards } from './StatsCards';
 import { RecentAttacks } from './RecentAttacks';
 import { SystemStatus } from './SystemStatus';
 import { QuickActions } from './QuickActions';
+import { RealtimeIndicator } from './RealtimeIndicator';
 import { useRealtimeData } from '../../hooks/useRealtimeData';
 
 export const Dashboard: React.FC = () => {
@@ -43,6 +44,11 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header with real-time indicator */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+        <RealtimeIndicator />
+      </div>
+
       {/* Top row - Main chart and stats */}
       <Row gutter={[24, 24]}>
         <Col xs={24} xl={16}>
