@@ -63,7 +63,12 @@ export const useRealtimeData = () => {
 
   return {
     isConnected: wafWebSocket.isConnected(),
-    reconnect: () => wafWebSocket.connect()
+    reconnect: () => {
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        wafWebSocket.connect(token);
+      }
+    }
   };
 };
 
