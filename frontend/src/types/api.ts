@@ -19,6 +19,9 @@ export interface PaginatedResponse<T> {
   page: number;
   pageSize: number;
   totalPages: number;
+  // Spring Boot Page compatibility
+  content?: T[];
+  totalElements?: number;
 }
 
 export interface WebSocketMessage {

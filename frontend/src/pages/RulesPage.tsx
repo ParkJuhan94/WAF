@@ -24,8 +24,8 @@ export const RulesPage: React.FC = () => {
     setViewMode('edit');
   };
 
-  const handleViewRule = (ruleId: number) => {
-    setSelectedRuleId(ruleId);
+  const handleViewRule = (rule: CustomRule) => {
+    setSelectedRuleId(rule.id);
     setViewMode('detail');
   };
 
@@ -73,7 +73,7 @@ export const RulesPage: React.FC = () => {
     if (viewMode === 'create' || viewMode === 'edit') {
       return (
         <CustomRuleForm
-          rule={selectedRule}
+          rule={selectedRule || undefined}
           onSave={handleSaveRule}
           onCancel={handleCancel}
         />
@@ -98,7 +98,6 @@ export const RulesPage: React.FC = () => {
         onCreateRule={handleCreateRule}
         onEditRule={handleEditRule}
         onViewRule={handleViewRule}
-        onDeleteRule={handleDeleteRule}
       />
     );
   };

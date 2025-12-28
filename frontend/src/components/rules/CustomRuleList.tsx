@@ -381,7 +381,7 @@ export const CustomRuleList: React.FC<CustomRuleListProps> = ({
                     <td className="px-6 py-4">
                       <StatusBadge
                         status={rule.enabled ? 'active' : 'inactive'}
-                        label={rule.enabled ? '활성' : '비활성'}
+                        showText={true}
                       />
                     </td>
                     <td className="px-6 py-4">
