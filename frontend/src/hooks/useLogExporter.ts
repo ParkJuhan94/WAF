@@ -115,11 +115,11 @@ const convertLogsToCSV = (logs: LogEntry[]): string => {
       `"${log.path}"`,
       log.statusCode,
       log.responseSize,
-      `"${log.userAgent}"`,
+      `"${log.userAgent || ''}"`,
       log.blocked,
       log.attackType || '',
       log.severity || '',
-      `"${log.matchedRules.join('; ')}"`,
+      `"${log.matchedRules ? log.matchedRules.join('; ') : ''}"`,
       log.responseTime
     ].join(','))
   ];
