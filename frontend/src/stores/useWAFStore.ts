@@ -20,11 +20,11 @@ interface WAFState {
   isLoadingRules: boolean;
 
   // Actions
-  fetchStatus: () => Promise<void>;
-  fetchStats: () => Promise<void>;
-  fetchRules: () => Promise<void>;
-  fetchTrafficData: (hours?: number) => Promise<void>;
-  fetchRecentAttacks: (limit?: number) => Promise<void>;
+  fetchStatus: () => Promise<WAFStatus>;
+  fetchStats: () => Promise<WAFStats>;
+  fetchRules: () => Promise<Rule[]>;
+  fetchTrafficData: (hours?: number) => Promise<TrafficData[]>;
+  fetchRecentAttacks: (limit?: number) => Promise<AttackEvent[]>;
 
   // Rule management
   toggleRule: (ruleId: string, enabled: boolean) => Promise<void>;
@@ -55,9 +55,11 @@ export const useWAFStore = create<WAFState>((set, get) => ({
     try {
       const status = await apiClient.getWAFStatus();
       set({ status, isLoadingStatus: false });
+      return status;  // Return data for React Query
     } catch (error) {
       console.error('Failed to fetch WAF status:', error);
       set({ isLoadingStatus: false });
+      throw error;  // Re-throw to let React Query handle error state
     }
   },
 
@@ -66,9 +68,11 @@ export const useWAFStore = create<WAFState>((set, get) => ({
     try {
       const stats = await apiClient.getDashboardStats();
       set({ stats, isLoadingStats: false });
+      return stats;  // Return data for React Query
     } catch (error) {
       console.error('Failed to fetch WAF stats:', error);
       set({ isLoadingStats: false });
+      throw error;  // Re-throw to let React Query handle error state
     }
   },
 
@@ -77,9 +81,11 @@ export const useWAFStore = create<WAFState>((set, get) => ({
     try {
       const rules = await apiClient.getRules();
       set({ rules, isLoadingRules: false });
+      return rules;  // Return data for React Query
     } catch (error) {
       console.error('Failed to fetch rules:', error);
       set({ isLoadingRules: false });
+      throw error;  // Re-throw to let React Query handle error state
     }
   },
 
@@ -87,8 +93,10 @@ export const useWAFStore = create<WAFState>((set, get) => ({
     try {
       const trafficData = await apiClient.getTrafficData(hours);
       set({ trafficData });
+      return trafficData;  // Return data for React Query
     } catch (error) {
       console.error('Failed to fetch traffic data:', error);
+      return [];  // Return empty array on error
     }
   },
 
@@ -96,8 +104,10 @@ export const useWAFStore = create<WAFState>((set, get) => ({
     try {
       const recentAttacks = await apiClient.getRecentAttacks(limit);
       set({ recentAttacks });
+      return recentAttacks;  // Return data for React Query
     } catch (error) {
       console.error('Failed to fetch recent attacks:', error);
+      return [];  // Return empty array on error
     }
   },
 

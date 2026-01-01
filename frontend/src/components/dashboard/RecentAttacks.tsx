@@ -1,17 +1,36 @@
-import React from 'react';
-import { Card, List, Typography, Space, Empty, Button } from 'antd';
+import React, { useState } from 'react';
+import { Card, List, Typography, Space, Empty, Button, Modal, Descriptions, Tag } from 'antd';
 import { EyeOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useWAFDashboardData } from '../../hooks/useRealtimeData';
 import { SeverityBadge, AttackTypeBadge, BlockedBadge } from '../common/StatusBadge';
-import { formatRelativeTime, formatIpAddress } from '../../utils/formatters';
+import { formatRelativeTime, formatIpAddress, formatDate } from '../../utils/formatters';
 import { Loading } from '../common/Loading';
+import { AttackEvent } from '../../types/waf';
 
 const { Title, Text } = Typography;
 
 export const RecentAttacks: React.FC = () => {
   const { recentAttacks, isLoading, refetchAll } = useWAFDashboardData();
+  const [selectedAttack, setSelectedAttack] = useState<AttackEvent | null>(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const showAttackDetail = (attack: AttackEvent) => {
+    setSelectedAttack(attack);
+    setIsModalVisible(true);
+  };
+
+  const getSeverityColor = (severity: string): string => {
+    switch (severity) {
+      case 'critical': return 'red';
+      case 'high': return 'orange';
+      case 'medium': return 'gold';
+      case 'low': return 'blue';
+      default: return 'default';
+    }
+  };
 
   return (
+    <>
     <Card
       className="bg-bg-card border-border"
       title={
@@ -51,6 +70,7 @@ export const RecentAttacks: React.FC = () => {
                   size="small"
                   icon={<EyeOutlined />}
                   className="text-text-secondary hover:text-accent-primary"
+                  onClick={() => showAttackDetail(attack)}
                 >
                   상세보기
                 </Button>,
@@ -87,7 +107,7 @@ export const RecentAttacks: React.FC = () => {
                     </Text>
                   )}
 
-                  {attack.matchedRules.length > 0 && (
+                  {attack.matchedRules && attack.matchedRules.length > 0 && (
                     <div className="flex items-center space-x-2 text-xs">
                       <Text className="text-text-secondary">매칭된 룰:</Text>
                       <Text className="text-accent-primary">
@@ -109,5 +129,68 @@ export const RecentAttacks: React.FC = () => {
         />
       )}
     </Card>
+
+    <Modal
+      title="공격 상세 정보"
+      open={isModalVisible}
+      onCancel={() => setIsModalVisible(false)}
+      footer={null}
+      width={800}
+      className="attack-detail-modal"
+    >
+      {selectedAttack && (
+        <Descriptions bordered column={2} size="small">
+          <Descriptions.Item label="공격 ID" span={2}>
+            {selectedAttack.id}
+          </Descriptions.Item>
+          <Descriptions.Item label="발생 시간">
+            {formatDate(selectedAttack.timestamp)}
+          </Descriptions.Item>
+          <Descriptions.Item label="출발지 IP">
+            {formatIpAddress(selectedAttack.sourceIp)}
+          </Descriptions.Item>
+          <Descriptions.Item label="공격 유형">
+            <Tag color={getSeverityColor(selectedAttack.severity)}>
+              {selectedAttack.attackType}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="위험도">
+            <Tag color={getSeverityColor(selectedAttack.severity)}>
+              {selectedAttack.severity.toUpperCase()}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="대상 경로" span={2}>
+            <code className="text-sm">{selectedAttack.targetPath}</code>
+          </Descriptions.Item>
+          <Descriptions.Item label="차단 여부" span={2}>
+            <Tag color={selectedAttack.blocked ? 'red' : 'green'}>
+              {selectedAttack.blocked ? '차단됨' : '허용됨'}
+            </Tag>
+          </Descriptions.Item>
+          <Descriptions.Item label="User-Agent" span={2}>
+            <div className="text-sm break-all">
+              {selectedAttack.userAgent || 'N/A'}
+            </div>
+          </Descriptions.Item>
+          <Descriptions.Item label="Payload" span={2}>
+            <pre className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-xs overflow-x-auto max-h-60">
+              {selectedAttack.payload || 'N/A'}
+            </pre>
+          </Descriptions.Item>
+          <Descriptions.Item label="매칭된 룰" span={2}>
+            {selectedAttack.matchedRules && selectedAttack.matchedRules.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {selectedAttack.matchedRules.map((rule, idx) => (
+                  <Tag key={idx} color="blue">{rule}</Tag>
+                ))}
+              </div>
+            ) : (
+              'N/A'
+            )}
+          </Descriptions.Item>
+        </Descriptions>
+      )}
+    </Modal>
+    </>
   );
 };

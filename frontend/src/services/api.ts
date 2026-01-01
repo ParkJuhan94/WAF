@@ -6,6 +6,27 @@ import { LogEntry, LogFilter, LogStats } from '../types/logs';
 class ApiClient {
   private client: AxiosInstance;
 
+  // Helper method to clean Jackson polymorphic serialization artifacts
+  private cleanJacksonPolymorphicData(data: any): any {
+    if (Array.isArray(data) && data.length === 2 && typeof data[0] === 'string' && data[0].includes('java.util')) {
+      // This is a Jackson polymorphic array, extract the actual data
+      return this.cleanJacksonPolymorphicData(data[1]);
+    } else if (Array.isArray(data)) {
+      // Clean each element in the array
+      return data.map(item => this.cleanJacksonPolymorphicData(item));
+    } else if (data && typeof data === 'object') {
+      // Clean each property in the object
+      const cleaned: any = {};
+      for (const key in data) {
+        if (key !== '@class') { // Skip Jackson @class annotations
+          cleaned[key] = this.cleanJacksonPolymorphicData(data[key]);
+        }
+      }
+      return cleaned;
+    }
+    return data;
+  }
+
   constructor() {
     this.client = axios.create({
       baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8081/api',
@@ -57,12 +78,16 @@ class ApiClient {
 
   async getTrafficData(hours: number = 24): Promise<TrafficData[]> {
     const response: AxiosResponse<ApiResponse<TrafficData[]>> = await this.client.get(`/dashboard/traffic?hours=${hours}`);
-    return response.data.data;
+    // Clean Jackson polymorphic serialization artifacts
+    const cleanedData = this.cleanJacksonPolymorphicData(response.data.data);
+    return cleanedData as TrafficData[];
   }
 
   async getRecentAttacks(limit: number = 10): Promise<AttackEvent[]> {
     const response: AxiosResponse<ApiResponse<AttackEvent[]>> = await this.client.get(`/dashboard/attacks?limit=${limit}`);
-    return response.data.data;
+    // Clean Jackson polymorphic serialization artifacts
+    const cleanedData = this.cleanJacksonPolymorphicData(response.data.data);
+    return cleanedData as AttackEvent[];
   }
 
   // Logs APIs

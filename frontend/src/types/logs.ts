@@ -1,17 +1,17 @@
 export interface LogEntry {
   id: string;
   timestamp: string;
-  sourceIp: string;
+  sourceIp: string | null;         // Can be null
   method: string;
   path: string;
   statusCode: number;
   responseSize: number;
-  userAgent: string;
+  userAgent: string | null;        // Can be null
   referer?: string;
   blocked: boolean;
   attackType?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
-  matchedRules: string[];
+  matchedRules: string[] | null;   // Can be null
   requestHeaders: Record<string, string>;
   requestBody?: string;
   responseTime: number;

@@ -47,14 +47,14 @@ export interface TrafficData {
 export interface AttackEvent {
   id: string;
   timestamp: string;
-  sourceIp: string;
+  sourceIp: string | null;        // Can be null from backend
   targetPath: string;
   attackType: string;
   severity: 'low' | 'medium' | 'high' | 'critical';
   blocked: boolean;
-  userAgent: string;
-  payload: string;
-  matchedRules: string[];
+  userAgent: string | null;        // Can be null from backend
+  payload: string | null;          // Can be null from backend
+  matchedRules: string[] | null;  // Can be null from backend
 }
 
 // Custom Rule types matching backend API
