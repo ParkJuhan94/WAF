@@ -108,7 +108,7 @@ public class DashboardServiceImpl implements DashboardService {
 
         List<TrafficDataResponse> trafficData = results.stream()
             .map(row -> new TrafficDataResponse(
-                ((Timestamp) row[0]).toLocalDateTime().toString(),
+                (String) row[0],  // DATE_FORMAT returns String, not Timestamp
                 ((Number) row[1]).longValue(),
                 ((Number) row[2]).longValue(),
                 ((Number) row[3]).longValue(),
@@ -132,8 +132,8 @@ public class DashboardServiceImpl implements DashboardService {
             .map(log -> new AttackEventResponse(
                 log.getId().toString(),
                 log.getTimestamp().toString(),
-                log.getSourceIp(),
-                log.getRequestUri(),
+                log.getSourceIp() != null ? log.getSourceIp() : "0.0.0.0",
+                log.getRequestUri() != null ? log.getRequestUri() : "/",
                 log.getAttackType() != null ? log.getAttackType() : "UNKNOWN",
                 mapSeverity(log.getRiskScore()),
                 log.isBlocked(),
