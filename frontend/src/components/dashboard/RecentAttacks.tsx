@@ -10,9 +10,11 @@ import { AttackEvent } from '../../types/waf';
 const { Title, Text } = Typography;
 
 export const RecentAttacks: React.FC = () => {
-  const { recentAttacks, isLoading, refetchAll } = useWAFDashboardData();
+  const { recentAttacks, isLoading, refetchAll} = useWAFDashboardData();
   const [selectedAttack, setSelectedAttack] = useState<AttackEvent | null>(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
 
   const showAttackDetail = (attack: AttackEvent) => {
     setSelectedAttack(attack);
@@ -29,25 +31,24 @@ export const RecentAttacks: React.FC = () => {
     }
   };
 
+  // Pagination data slicing
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedAttacks = recentAttacks.slice(startIndex, endIndex);
+
   return (
     <>
     <Card
       className="bg-bg-card border-border"
       title={
-        <div className="flex items-center justify-between">
-          <Title level={4} className="text-text-primary m-0">
-            최근 공격 이벤트
-          </Title>
-          <ReloadOutlined
-            className="text-text-secondary hover:text-accent-primary cursor-pointer"
-            onClick={refetchAll}
-          />
-        </div>
+        <Title level={5} className="text-text-primary m-0">
+          최근 공격 이벤트
+        </Title>
       }
       bordered={false}
     >
       {isLoading ? (
-        <Loading tip="공격 이벤트 로딩 중..." />
+        <Loading tip="로딩 중..." />
       ) : recentAttacks.length === 0 ? (
         <Empty
           description={
@@ -59,7 +60,7 @@ export const RecentAttacks: React.FC = () => {
         />
       ) : (
         <List
-          dataSource={recentAttacks}
+          dataSource={paginatedAttacks}
           renderItem={(attack) => (
             <List.Item
               className="border-b border-border last:border-b-0 py-3"
@@ -88,44 +89,54 @@ export const RecentAttacks: React.FC = () => {
                   </Text>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-4">
-                    <Text className="text-text-primary font-medium">
-                      {formatIpAddress(attack.sourceIp)}
-                    </Text>
-                    <Text className="text-text-secondary">
-                      → {attack.targetPath}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <code className="text-accent-primary font-mono text-sm px-2 py-1 bg-gray-900 rounded border border-gray-700">
+                        {formatIpAddress(attack.sourceIp)}
+                      </code>
+                      <span className="text-text-secondary">→</span>
+                    </div>
+                    <Text className="text-text-secondary text-sm truncate flex-1" style={{ maxWidth: '400px' }}>
+                      {attack.targetPath}
                     </Text>
                   </div>
 
                   {attack.payload && (
-                    <Text
-                      className="text-text-secondary text-sm font-mono block truncate"
-                      style={{ maxWidth: '400px' }}
-                    >
-                      {attack.payload}
-                    </Text>
+                    <div className="bg-gray-900 border border-gray-700 rounded px-3 py-2">
+                      <code className="text-accent-primary text-xs font-mono block overflow-x-auto whitespace-nowrap">
+                        {attack.payload}
+                      </code>
+                    </div>
                   )}
 
                   {attack.matchedRules && attack.matchedRules.length > 0 && (
-                    <div className="flex items-center space-x-2 text-xs">
-                      <Text className="text-text-secondary">매칭된 룰:</Text>
-                      <Text className="text-accent-primary">
-                        {attack.matchedRules.slice(0, 2).join(', ')}
-                        {attack.matchedRules.length > 2 && (
-                          <span className="text-text-secondary">
-                            {' '}외 {attack.matchedRules.length - 2}개
-                          </span>
-                        )}
-                      </Text>
+                    <div className="flex flex-wrap gap-1">
+                      {attack.matchedRules.slice(0, 3).map((rule, idx) => (
+                        <Tag key={idx} color="orange" className="text-xs">
+                          {rule}
+                        </Tag>
+                      ))}
+                      {attack.matchedRules.length > 3 && (
+                        <Tag color="default" className="text-xs">
+                          +{attack.matchedRules.length - 3}개
+                        </Tag>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             </List.Item>
           )}
-          pagination={false}
-          style={{ maxHeight: '400px', overflowY: 'auto' }}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: recentAttacks.length,
+            onChange: (page) => setCurrentPage(page),
+            showSizeChanger: false,
+            size: 'small',
+            className: 'mt-4'
+          }}
         />
       )}
     </Card>
