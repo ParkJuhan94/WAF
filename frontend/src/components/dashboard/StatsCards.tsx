@@ -1,15 +1,11 @@
 import React from 'react';
-import { Card, Statistic, Row, Col, Progress } from 'antd';
-import {
-  GlobalOutlined,
-  SafetyCertificateOutlined,
-  ExclamationCircleOutlined,
-  ClockCircleOutlined,
-  RiseOutlined
-} from '@ant-design/icons';
+import { Card, Statistic, Progress, Typography } from 'antd';
+import { SafetyCertificateOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useWAFDashboardData } from '../../hooks/useRealtimeData';
-import { formatNumber, formatDuration, formatPercentage } from '../../utils/formatters';
+import { formatNumber, formatPercentage } from '../../utils/formatters';
 import { Loading } from '../common/Loading';
+
+const { Text } = Typography;
 
 export const StatsCards: React.FC = () => {
   const { stats, isLoading } = useWAFDashboardData();
@@ -19,68 +15,29 @@ export const StatsCards: React.FC = () => {
   }
 
   const blockRate = (stats.blockedRequests / stats.totalRequests) * 100;
-  const allowRate = (stats.allowedRequests / stats.totalRequests) * 100;
-
-  const statsData = [
-    {
-      title: '총 요청 수',
-      value: stats.totalRequests,
-      formatter: (val: any) => formatNumber(val as number),
-      prefix: <GlobalOutlined className="text-info" />,
-      valueStyle: { color: '#48cae4' },
-    },
-    {
-      title: '차단된 요청',
-      value: stats.blockedRequests,
-      formatter: (val: any) => formatNumber(val as number),
-      prefix: <SafetyCertificateOutlined className="text-danger" />,
-      valueStyle: { color: '#ff6b6b' },
-    },
-    {
-      title: '허용된 요청',
-      value: stats.allowedRequests,
-      formatter: (val: any) => formatNumber(val as number),
-      prefix: <ExclamationCircleOutlined className="text-success" />,
-      valueStyle: { color: '#1ec997' },
-    },
-    {
-      title: '평균 응답 시간',
-      value: stats.avgResponseTime,
-      formatter: (val: any) => `${val}ms`,
-      prefix: <ClockCircleOutlined className="text-warning" />,
-      valueStyle: { color: '#feca57' },
-    },
-  ];
 
   return (
-    <div className="space-y-4">
-      {/* Main stats grid */}
-      <Row gutter={[16, 16]}>
-        {statsData.map((stat, index) => (
-          <Col span={12} key={index}>
-            <Card className="bg-bg-card border-border" bordered={false}>
-              <Statistic
-                title={<span className="text-text-secondary">{stat.title}</span>}
-                value={stat.value}
-                formatter={stat.formatter}
-                prefix={stat.prefix}
-                valueStyle={stat.valueStyle}
-              />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+    <Card className="bg-bg-card border-border h-full" bordered={false}>
+      <div className="space-y-6">
+        {/* 차단된 공격 */}
+        <div>
+          <Statistic
+            title={<span className="text-text-secondary text-sm">차단된 공격</span>}
+            value={stats.blockedRequests}
+            formatter={(val) => formatNumber(val as number)}
+            prefix={<SafetyCertificateOutlined className="text-danger" />}
+            valueStyle={{ color: '#ff6b6b', fontSize: '32px', fontWeight: 'bold' }}
+          />
+        </div>
 
-      {/* Block rate visualization */}
-      <Card className="bg-bg-card border-border" bordered={false}>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-text-primary font-medium">차단율</span>
-            <span className="text-text-primary font-bold text-lg">
+        {/* 차단율 Progress */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Text className="text-text-secondary text-sm">차단율</Text>
+            <Text className="text-text-primary font-bold text-xl">
               {formatPercentage(stats.blockedRequests, stats.totalRequests)}
-            </span>
+            </Text>
           </div>
-
           <Progress
             percent={blockRate}
             strokeColor={{
@@ -89,38 +46,28 @@ export const StatsCards: React.FC = () => {
             }}
             trailColor="#2c3545"
             showInfo={false}
-            strokeWidth={8}
+            strokeWidth={10}
           />
+        </div>
 
-          <div className="flex justify-between text-sm">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-danger"></div>
-              <span className="text-text-secondary">차단됨</span>
-              <span className="text-danger font-medium">
-                {formatPercentage(stats.blockedRequests, stats.totalRequests)}
-              </span>
+        {/* 요약 정보 */}
+        <div className="pt-4 border-t border-border">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <Text className="text-text-secondary text-xs block mb-1">차단됨</Text>
+              <Text className="text-danger font-bold text-lg">
+                {formatNumber(stats.blockedRequests)}
+              </Text>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 rounded-full bg-success"></div>
-              <span className="text-text-secondary">허용됨</span>
-              <span className="text-success font-medium">
-                {formatPercentage(stats.allowedRequests, stats.totalRequests)}
-              </span>
+            <div className="text-center">
+              <Text className="text-text-secondary text-xs block mb-1">허용됨</Text>
+              <Text className="text-success font-bold text-lg">
+                {formatNumber(stats.allowedRequests)}
+              </Text>
             </div>
           </div>
         </div>
-      </Card>
-
-      {/* Uptime card */}
-      <Card className="bg-bg-card border-border" bordered={false}>
-        <Statistic
-          title={<span className="text-text-secondary">시스템 가동 시간</span>}
-          value={stats.uptime}
-          formatter={(val) => formatDuration(val as number)}
-          prefix={<RiseOutlined className="text-success" />}
-          valueStyle={{ color: '#1ec997' }}
-        />
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 };
