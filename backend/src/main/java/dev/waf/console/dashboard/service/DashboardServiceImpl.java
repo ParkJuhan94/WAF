@@ -19,8 +19,12 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -103,22 +107,43 @@ public class DashboardServiceImpl implements DashboardService {
         LocalDateTime endTime = LocalDateTime.now();
         LocalDateTime startTime = endTime.minusHours(hours);
 
-        // Repository의 Native Query로 시간대별 집계 데이터 조회
+        // 1. DB에서 실제 데이터 조회
         List<Object[]> results = wafLogRepository.getTrafficDataByHour(startTime, endTime);
 
-        List<TrafficDataResponse> trafficData = results.stream()
-            .map(row -> new TrafficDataResponse(
-                (String) row[0],  // DATE_FORMAT returns String, not Timestamp
-                ((Number) row[1]).longValue(),
-                ((Number) row[2]).longValue(),
-                ((Number) row[3]).longValue(),
-                ((Number) row[4]).doubleValue()
-            ))
-            .collect(Collectors.toList());
+        // 2. 실제 데이터를 Map으로 변환 (timestamp -> TrafficData)
+        Map<String, TrafficDataResponse> dataMap = results.stream()
+            .collect(Collectors.toMap(
+                row -> (String) row[0], // timestamp (key)
+                row -> new TrafficDataResponse(
+                    (String) row[0],  // DATE_FORMAT returns String
+                    ((Number) row[1]).longValue(),
+                    ((Number) row[2]).longValue(),
+                    ((Number) row[3]).longValue(),
+                    ((Number) row[4]).doubleValue()
+                )
+            ));
 
-        log.debug("Traffic data retrieved: {} data points", trafficData.size());
+        // 3. 시간 범위 내 모든 시간대 생성
+        List<TrafficDataResponse> filledData = new ArrayList<>();
+        LocalDateTime currentHour = startTime.truncatedTo(ChronoUnit.HOURS);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00:00");
 
-        return trafficData;
+        while (currentHour.isBefore(endTime) || currentHour.isEqual(endTime)) {
+            String hourKey = currentHour.format(formatter);
+
+            // 4. 실제 데이터가 있으면 사용, 없으면 0으로 채움
+            TrafficDataResponse data = dataMap.getOrDefault(
+                hourKey,
+                new TrafficDataResponse(hourKey, 0L, 0L, 0L, 0.0)
+            );
+
+            filledData.add(data);
+            currentHour = currentHour.plusHours(1);
+        }
+
+        log.debug("Traffic data retrieved: {} data points (filled)", filledData.size());
+
+        return filledData;
     }
 
     @Override
