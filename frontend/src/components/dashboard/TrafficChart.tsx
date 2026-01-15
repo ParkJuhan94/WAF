@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, Select, Space, Typography, Spin, Statistic, Alert } from 'antd';
+import { Card, Select, Space, Typography, Spin, Statistic, Alert, Empty } from 'antd';
 import { ReloadOutlined, SafetyCertificateOutlined, WarningOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import * as echarts from 'echarts';
@@ -188,6 +188,15 @@ export const TrafficChart: React.FC = () => {
       {/* 차트 */}
       {isLoading && trafficData.length === 0 ? (
         <Loading tip="로딩 중..." />
+      ) : trafficData.length === 0 ? (
+        <Empty
+          description={
+            <span className="text-text-secondary">
+              선택한 기간 동안 트래픽 데이터가 없습니다
+            </span>
+          }
+          className="py-16"
+        />
       ) : (
         <div
           ref={chartRef}
