@@ -40,7 +40,7 @@ public class WAFLog {
      * 로그 발생 시간
      */
     @CreatedDate
-    @Column(name = "timestamp", nullable = false)
+    @Column(name = "timestamp", nullable = false, updatable = false)
     private LocalDateTime timestamp;
 
     /**
